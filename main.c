@@ -21,9 +21,11 @@ int main(int argc, char *argv[]) {
   /* Parse command line */
   parse_options(&opts, argc, argv);
 
-  /* Ensure we never elevate privileges again */
-  if(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0, 0) == -1)
-    errExit("prctl");
+  if(!opts.allow_new_privs) {
+    /* Ensure we never elevate privileges again */
+    if(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0, 0) == -1)
+      errExit("prctl");
+  }
 
   /* Allocate stack for child */
   stack = malloc(STACK_SIZE);

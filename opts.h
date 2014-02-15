@@ -3,6 +3,7 @@
 typedef enum { false, true } bool;
 
 typedef struct {
+  bool allow_new_privs;
   char **argv;
 } appjail_options;
 
