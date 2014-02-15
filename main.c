@@ -191,6 +191,13 @@ static void setup_devpts() {
     errExit("mount --bind");
 }
 
+static void setup_shm() {
+  if( cap_umount2("/dev/shm", MNT_DETACH) == -1 && errno != EINVAL)
+    errExit("umount2");
+  if( cap_mount("shm", "/dev/shm", "tmpfs", MS_NODEV | MS_NOSUID, "mode=1777,uid=0,gid=0") == -1)
+    errExit("mount shm");
+}
+
 static int child_main(void *arg) {
   char tmpdir[PATH_MAX];
 
@@ -219,6 +226,7 @@ static int child_main(void *arg) {
 
   setup_tty();
   setup_devpts();
+  setup_shm();
 
   setup_home_directory();
 
