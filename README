@@ -1,0 +1,21 @@
+appjail is a tool that runs an application in an isolated environment, or jail. 
+It is designed to be executed by an unprivileged user. When called, it sets up 
+a new IPC, mount and PID namespace. It then unmounts the /home, /var/tmp and 
+/tmp directories and replaces them with private ones. The jail further gets its 
+private POSIX shared memory space (/dev/shm) and private set of pseudo TTYs. 
+Inside the jail, it is impossible to raise privileges using setuid binaries or 
+file capabilities.
+
+appjail requires a kernel with the following options enabled:
+ CONFIG_NAMESPACES=y
+ CONFIG_IPC_NS=y
+ CONFIG_PID_NS=y
+It also needs a file system with support for file capabilities.
+
+To compile and install appjail, run the following commands:
+ $ ./autogen.sh
+ $ ./configure
+ $ make
+Then, as root, run
+ # make install
+ # setcap cap_sys_admin,cap_chown=p /usr/local/bin/appjail
