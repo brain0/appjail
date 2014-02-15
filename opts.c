@@ -3,6 +3,14 @@
 #include <getopt.h>
 
 static void usage() {
+  printf("Usage: appjail [OPTIONS] [COMMAND]\n"
+         "\n"
+         "Start COMMAND in an isolated environment. If COMMAND is not given, it is set to '/bin/sh -i'.\n"
+         "\n"
+         "Options:\n"
+         "  -h, --help              Print command help and exit.\n"
+         "  -p, --allow-new-privs   Don't prevent setuid binaries from raising privileges.\n"
+         "\n");
 }
 
 void parse_options(appjail_options *opts, int argc, char *argv[]) {
