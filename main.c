@@ -155,6 +155,42 @@ static void setup_home_directory() {
     errExit("chdir");  
 }
 
+static void setup_tty() {
+  const char *console;
+  int fd;
+
+  /* Get name of the current TTY */
+  if( (console = ttyname(0)) == NULL )
+    errExit("ttyname()");
+  /* Make the current TTY accessible under /dev/console */
+  if( cap_mount(console, "/dev/console", NULL, MS_BIND, NULL) == -1)
+    errExit("mount --bind $TTY /dev/console");
+
+  /* The current TTY is now accessible under /dev/console,
+   * however, the original device (like /dev/pts/0) will not
+   * be accessible in the container. Reopen /dev/console as our
+   * standard input, output and error.
+   */
+  if((fd = open("/dev/console", O_RDWR)) == -1)
+    errExit("open(/dev/console)");
+  close(0);
+  close(1);
+  close(2);
+  dup2(fd, 0);
+  dup2(fd, 1);
+  dup2(fd, 2);
+  close(fd);
+}
+
+static void setup_devpts() {
+  if( cap_umount2("/dev/pts", MNT_DETACH) == -1 && errno != EINVAL)
+    errExit("umount2");
+  if( cap_mount("devpts", "/dev/pts", "devpts", 0, "newinstance,gid=5,mode=620,ptmxmode=0666") == -1)
+    errExit("mount devpts");
+  if( cap_mount("/dev/pts/ptmx", "/dev/ptmx", NULL, MS_BIND, NULL) == -1 )
+    errExit("mount --bind");
+}
+
 static int child_main(void *arg) {
   char tmpdir[PATH_MAX];
 
@@ -180,6 +216,9 @@ static int child_main(void *arg) {
 
   if( cap_umount2("/var/empty", MNT_DETACH) == -1 && errno != EINVAL)
     errExit("umount /var/empty");
+
+  setup_tty();
+  setup_devpts();
 
   setup_home_directory();
 
