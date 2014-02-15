@@ -147,7 +147,12 @@ int child_main(void *arg) {
   /* We drop all capabilities from the permitted capability set */
   drop_caps_forever();
 
-  execlp("/bin/bash", "/bin/bash", NULL);
-  /* We should never be here */
-  errExit("execlp");
+  if(opts->argv[0] != NULL) {
+    execvp(opts->argv[0], opts->argv);
+    errExit("execvp");
+  }
+  else {
+    execl("/bin/sh", "/bin/sh", "-i", NULL);
+    errExit("execl");
+  }
 }

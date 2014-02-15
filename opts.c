@@ -34,4 +34,5 @@ void parse_options(appjail_options *opts, int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
   }
+  opts->argv = &(argv[optind]);
 }
