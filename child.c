@@ -33,10 +33,10 @@ static void setup_proc() {
     errExit("mount -t proc proc /proc");
 }
 
-static void setup_path(const char *tmpdir, const char *name, const char *path, mode_t mode) {
+static void setup_path(const char *name, const char *path, mode_t mode) {
   char p[PATH_MAX];
 
-  snprintf(p, PATH_MAX-1, "%s/%s", tmpdir, name);
+  snprintf(p, PATH_MAX-1, "./%s", name);
   if( mkdir(p, mode) == -1 )
     errExit("mkdir");
   if( chmod(p, mode) == -1 )
@@ -111,33 +111,33 @@ int child_main(void *arg) {
   appjail_options *opts = (appjail_options*)arg;
 
   drop_caps();
-  /* Change the directory to / */
-  if(chdir("/") == -1)
-    errExit("chdir()");
-
   make_mounts_private();
-  setup_proc();
-
-  /* move /tmp somewhere else */
-  if( cap_mount("/tmp", "/var/empty", NULL, MS_MOVE, NULL) == -1 )
-    errExit("mount --move /tmp /var/empty");
   /* Create temporary directory */
-  strncpy(tmpdir, "/var/empty/appjail-XXXXXX", PATH_MAX-1);
+  strncpy(tmpdir, "/tmp/appjail-XXXXXX", PATH_MAX-1);
   if( mkdtemp(tmpdir) == NULL )
     errExit("mkdtemp");
+  /* Bind the temporary directory to /var/empty
+   * This isn't nice, but we need a directory that we won't touch */
+  if( cap_mount(tmpdir, "/var/empty", NULL, MS_BIND, NULL) == -1 )
+    errExit("mount --bind TMPDIR /var/empty");
+  /* Change into the temporary directory */
+  if(chdir("/var/empty") == -1)
+    errExit("chdir()");
 
-  setup_path(tmpdir, "tmp", "/tmp", 01777);
-  setup_path(tmpdir, "vartmp", "/var/tmp", 01777);
-  setup_path(tmpdir, "home", "/home", 0755);
-
-  if( cap_umount2("/var/empty", MNT_DETACH) == -1 && errno != EINVAL)
-    errExit("umount /var/empty");
+  setup_proc();
+  setup_path("tmp", "/tmp", 01777);
+  setup_path("vartmp", "/var/tmp", 01777);
+  setup_path("home", "/home", 0755);
 
   setup_tty();
   setup_devpts();
   setup_shm();
 
   setup_home_directory();
+
+  /* unmount our temporary directory */
+  if( cap_umount2("/var/empty", MNT_DETACH) == -1 )
+    errExit("umount /var/empty");
 
   /* Make some permissions consistent */
   cap_chown("/tmp", 0, 0);
