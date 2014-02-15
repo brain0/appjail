@@ -1,0 +1,6 @@
+* parse command line options: --homedir
+* handle /run: keep, only keep /run/user/$UID, create private /run
+* handle X11 sockets and .Xauthority?
+* handle dbus sockets?
+* add optional seccomp restrictions?
+* cleanup after exit? (difficult, since we chown some directories to root)
