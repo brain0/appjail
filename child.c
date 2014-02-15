@@ -137,6 +137,11 @@ int child_main(void *arg) {
 
   setup_home_directory();
 
+  /* Make some permissions consistent */
+  cap_chown("/tmp", 0, 0);
+  cap_chown("/var/tmp", 0, 0);
+  cap_chown("/home", 0, 0);
+
   /* We drop all capabilities from the permitted capability set */
   drop_caps_forever();
 

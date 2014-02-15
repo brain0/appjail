@@ -52,3 +52,13 @@ int cap_umount2(const char *target, int flags) {
 
   return r;
 }
+
+int cap_chown(const char *path, uid_t owner, gid_t group) {
+  int r;
+
+  need_cap(CAP_CHOWN);
+  r = chown(path, owner, group);
+  drop_caps();
+
+  return r;
+}
