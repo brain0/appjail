@@ -1,4 +1,4 @@
-* parse command line options: --homedir
+* Add --homedir option to specify directory to use as $HOME.
 * handle /run: keep, only keep /run/user/$UID, create private /run
 * handle X11 sockets and .Xauthority?
 * handle dbus sockets?

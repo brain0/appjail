@@ -1,6 +1,7 @@
 #include "common.h"
 #include "cap.h"
 #include "child.h"
+#include "opts.h"
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -107,6 +108,7 @@ static void setup_shm() {
 
 int child_main(void *arg) {
   char tmpdir[PATH_MAX];
+  appjail_options *opts = (appjail_options*)arg;
 
   drop_caps();
   /* Change the directory to / */
