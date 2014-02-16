@@ -12,13 +12,13 @@
 #include <limits.h>
 #include <string.h>
 
-static void make_mounts_private() {
+static void set_mount_propagation() {
   /* Make our mount a slave of the host - this will make sure all
    * new mounts propagate from the host, but our mounts do not
    * propagate to the host
    */
-  if( cap_mount("none", "/", "none", MS_REC | MS_PRIVATE, NULL) == -1)
-    errExit("mount --make-rprivate /");
+  if( cap_mount(NULL, "/", NULL, MS_REC | MS_SLAVE, NULL) == -1)
+    errExit("mount --make-rslave /");
 }
 
 static void setup_proc() {
@@ -45,6 +45,8 @@ static void setup_path(const char *name, const char *path, mode_t mode) {
     errExit("umount2");
   if( cap_mount(p, path, NULL, MS_BIND, NULL) == -1 )
     errExit("mount --bind");
+  if( cap_mount(NULL, path, NULL, MS_PRIVATE, NULL) == -1)
+    errExit("mount --make-rprivate");
 }
 
 static void setup_home_directory() {
@@ -111,7 +113,7 @@ int child_main(void *arg) {
   appjail_options *opts = (appjail_options*)arg;
 
   drop_caps();
-  make_mounts_private();
+  set_mount_propagation();
   /* Create temporary directory */
   strncpy(tmpdir, "/tmp/appjail-XXXXXX", PATH_MAX-1);
   if( mkdtemp(tmpdir) == NULL )
