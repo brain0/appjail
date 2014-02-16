@@ -4,6 +4,7 @@ typedef enum { false, true } bool;
 
 typedef struct {
   bool allow_new_privs;
+  const char *homedir;
   char **argv;
 } appjail_options;
 

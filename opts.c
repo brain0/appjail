@@ -10,6 +10,7 @@ static void usage() {
          "Options:\n"
          "  -h, --help              Print command help and exit.\n"
          "  -p, --allow-new-privs   Don't prevent setuid binaries from raising privileges.\n"
+         "  -H, --homedir <DIR>     Use DIR as home directory instead of a temporary one.\n"
          "\n");
 }
 
@@ -18,13 +19,15 @@ void parse_options(appjail_options *opts, int argc, char *argv[]) {
   static struct option long_options[] = {
     { "help",            no_argument,       0,  'h' },
     { "allow-new-privs", no_argument,       0,  'p' },
+    { "homedir",         required_argument, 0,  'H' },
     { 0,                 0,                 0,  0   }
   };
 
   /* defaults */
   opts->allow_new_privs = false;
+  opts->homedir = NULL;
 
-  while((opt = getopt_long(argc, argv, "+:hp", long_options, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, "+:hpH:", long_options, NULL)) != -1) {
     switch(opt) {
       case 'h':
         usage();
@@ -32,6 +35,9 @@ void parse_options(appjail_options *opts, int argc, char *argv[]) {
         break;
       case 'p':
         opts->allow_new_privs = true;
+        break;
+      case 'H':
+        opts->homedir = optarg;
         break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);

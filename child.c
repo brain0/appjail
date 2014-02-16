@@ -2,10 +2,10 @@
 #include "cap.h"
 #include "child.h"
 #include "opts.h"
+#include "home.h"
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <pwd.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -47,22 +47,6 @@ static void setup_path(const char *name, const char *path, mode_t mode) {
     errExit("mount --bind");
   if( cap_mount(NULL, path, NULL, MS_PRIVATE, NULL) == -1)
     errExit("mount --make-rprivate");
-}
-
-static void setup_home_directory() {
-  struct passwd *pw;
-  char dir[PATH_MAX];
-
-  errno = 0;
-  if((pw = getpwuid(getuid())) == NULL)
-    errExit("getpwuid");
-  snprintf(dir, PATH_MAX-1, "/home/%s", pw->pw_name);
-  if(mkdir(dir, 0755) == -1)
-    errExit("mkdir");
-  if(setenv("HOME", dir, 1) == -1)
-    errExit("setenv");
-  if(chdir(dir) == -1)
-    errExit("chdir");  
 }
 
 static void setup_tty() {
@@ -126,6 +110,10 @@ int child_main(void *arg) {
   if(chdir("/var/empty") == -1)
     errExit("chdir()");
 
+  /* Bind the home directory before we change any other mounts */
+  get_home_directory(opts->homedir);
+
+  /* set up our private mounts */
   setup_proc();
   setup_path("tmp", "/tmp", 01777);
   setup_path("vartmp", "/var/tmp", 01777);
