@@ -49,16 +49,30 @@ static void setup_path(const char *name, const char *path, mode_t mode) {
     errExit("mount --make-rprivate");
 }
 
-static void setup_tty() {
+static void get_tty() {
   const char *console;
   int fd;
 
   /* Get name of the current TTY */
   if( (console = ttyname(0)) == NULL )
     errExit("ttyname()");
-  /* Make the current TTY accessible under /dev/console */
-  if( cap_mount(console, "/dev/console", NULL, MS_BIND, NULL) == -1)
-    errExit("mount --bind $TTY /dev/console");
+  /* create a dummy file to mount to */
+  if((fd = open("console", O_CREAT|O_RDWR, 0)) == -1)
+    errExit("open()");
+  close(fd);
+  /* Make the current TTY accessible in APPJAIL_SWAPDIR/console */
+  if( cap_mount(console, "console", NULL, MS_BIND, NULL) == -1)
+    errExit("mount --bind $TTY APPJAIL_SWAPDIR/console");
+  /* Make the console bind private */
+  if( cap_mount(NULL, "console", NULL, MS_PRIVATE, NULL) == -1)
+    errExit("mount --make-private APPJAIL_SWAPDIR/console");
+}
+
+static void setup_tty() {
+  int fd;
+
+  if( cap_mount("console", "/dev/console", NULL, MS_MOVE, NULL) == -1)
+    errExit("mount --bind APPJAIL_SWAPDIR/console /dev/console");
 
   /* The current TTY is now accessible under /dev/console,
    * however, the original device (like /dev/pts/0) will not
@@ -110,19 +124,21 @@ int child_main(void *arg) {
   if(chdir(APPJAIL_SWAPDIR) == -1)
     errExit("chdir()");
 
-  /* Bind the home directory before we change any other mounts */
+  /* Bind directories and files that may disappear */
   get_home_directory(opts->homedir);
+  get_tty();
 
   /* set up our private mounts */
   setup_proc();
   setup_path("tmp", "/tmp", 01777);
   setup_path("vartmp", "/var/tmp", 01777);
   setup_path("home", "/home", 0755);
-
-  setup_tty();
   setup_devpts();
   setup_shm();
 
+  /* set up the tty */
+  setup_tty();
+  /* set up home directory using the one we bound earlier */
   setup_home_directory();
 
   /* unmount our temporary directory */
