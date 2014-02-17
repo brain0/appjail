@@ -21,6 +21,7 @@ AC_FUNC_CHOWN
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([dup2 mkdir setenv clone])
 
+PKG_CHECK_MODULES([libmount], [mount])
 PKG_CHECK_MODULES([libcap], [libcap])
 
 AM_CONFIG_HEADER([config.h])

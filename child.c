@@ -3,6 +3,7 @@
 #include "child.h"
 #include "opts.h"
 #include "home.h"
+#include "propagation.h"
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -12,27 +13,6 @@
 #include <limits.h>
 #include <string.h>
 
-static void set_mount_propagation() {
-  /* Make our mount a slave of the host - this will make sure all
-   * new mounts propagate from the host, but our mounts do not
-   * propagate to the host
-   */
-  if( cap_mount(NULL, "/", NULL, MS_REC | MS_SLAVE, NULL) == -1)
-    errExit("mount --make-rslave /");
-}
-
-static void setup_proc() {
-  /* Mount our own local /proc - we have our own PID namespace,
-   * so this doesn't give away information regarding the host.
-   *
-   * The host's /proc/mounts is still visible, sadly.
-   */
-  if( cap_umount2("/proc", MNT_DETACH) == -1 && errno != EINVAL)
-    errExit("umount /proc");
-  if( cap_mount("proc", "/proc", "proc", 0, NULL) == -1)
-    errExit("mount -t proc proc /proc");
-}
-
 static void setup_path(const char *name, const char *path, mode_t mode) {
   char p[PATH_MAX];
 
@@ -41,8 +21,6 @@ static void setup_path(const char *name, const char *path, mode_t mode) {
     errExit("mkdir");
   if( chmod(p, mode) == -1 )
     errExit("chmod");
-  if( cap_umount2(path, MNT_DETACH) == -1 && errno != EINVAL)
-    errExit("umount2");
   if( cap_mount(p, path, NULL, MS_BIND, NULL) == -1 )
     errExit("mount --bind");
   if( cap_mount(NULL, path, NULL, MS_PRIVATE, NULL) == -1)
@@ -91,8 +69,6 @@ static void setup_tty() {
 }
 
 static void setup_devpts() {
-  if( cap_umount2("/dev/pts", MNT_DETACH) == -1 && errno != EINVAL)
-    errExit("umount2");
   if( cap_mount("devpts", "/dev/pts", "devpts", 0, "newinstance,gid=5,mode=620,ptmxmode=0666") == -1)
     errExit("mount devpts");
   if( cap_mount("/dev/pts/ptmx", "/dev/ptmx", NULL, MS_BIND, NULL) == -1 )
@@ -100,8 +76,6 @@ static void setup_devpts() {
 }
 
 static void setup_shm() {
-  if( cap_umount2("/dev/shm", MNT_DETACH) == -1 && errno != EINVAL)
-    errExit("umount2");
   if( cap_mount("shm", "/dev/shm", "tmpfs", MS_NODEV | MS_NOSUID, "mode=1777,uid=0,gid=0") == -1)
     errExit("mount shm");
 }
@@ -111,7 +85,11 @@ int child_main(void *arg) {
   appjail_options *opts = (appjail_options*)arg;
 
   drop_caps();
-  set_mount_propagation();
+  /* Make our mount a slave of the host - this will make sure our
+   * mounts do not propagate to the host. If we made everything
+   * private now, we would lose the ability to keep anything as slave.
+   */
+  set_mount_propagation_slave();
   /* Create temporary directory */
   strncpy(tmpdir, "/tmp/appjail-XXXXXX", PATH_MAX-1);
   if( mkdtemp(tmpdir) == NULL )
@@ -128,8 +106,10 @@ int child_main(void *arg) {
   get_home_directory(opts->homedir);
   get_tty();
 
+  /* clean up the mounts, making almost everything private */
+  sanitize_mounts(opts);
+
   /* set up our private mounts */
-  setup_proc();
   setup_path("tmp", "/tmp", 01777);
   setup_path("vartmp", "/var/tmp", 01777);
   setup_path("home", "/home", 0755);

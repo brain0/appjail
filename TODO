@@ -1,4 +1,6 @@
 * change APPJAIL_SWAPDIR to a sane location, which can be changed in configure
+* maybe free some memory from opts
+* clean up unmount_directories and shared_directories handling, allow command line options for it
 * handle /run: keep, only keep /run/user/$UID, create private /run
 * handle X11 sockets and .Xauthority?
 * handle dbus sockets?

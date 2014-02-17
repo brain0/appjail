@@ -26,6 +26,16 @@ void parse_options(appjail_options *opts, int argc, char *argv[]) {
   /* defaults */
   opts->allow_new_privs = false;
   opts->homedir = NULL;
+  /* */
+  opts->special_directories.unmount_directories = malloc(6*sizeof(char*));
+  opts->special_directories.unmount_directories[0] = "/dev/shm";
+  opts->special_directories.unmount_directories[1] = "/dev/pts";
+  opts->special_directories.unmount_directories[2] = "/tmp";
+  opts->special_directories.unmount_directories[3] = "/var/tmp";
+  opts->special_directories.unmount_directories[4] = "/home";
+  opts->special_directories.unmount_directories[5] = NULL;
+  opts->special_directories.shared_directories = malloc(sizeof(char*));
+  opts->special_directories.shared_directories[0] = NULL;
 
   while((opt = getopt_long(argc, argv, "+:hpH:", long_options, NULL)) != -1) {
     switch(opt) {
