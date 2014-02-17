@@ -40,9 +40,11 @@ void setup_home_directory() {
     errExit("mkdir");
   if(setenv("HOME", dir, 1) == -1)
     errExit("setenv");
-  if(lstat("./homedir", &st) != -1 && S_ISDIR(st.st_mode))
+  if(lstat("./homedir", &st) != -1 && S_ISDIR(st.st_mode)) {
     if(cap_mount("./homedir", dir, NULL, MS_MOVE, NULL) == -1)
       errExit("mount --move");
+    rmdir("./homedir");
+  }
   if(chdir(dir) == -1)
     errExit("chdir");
 }

@@ -51,6 +51,7 @@ static void setup_tty() {
 
   if( cap_mount("console", "/dev/console", NULL, MS_MOVE, NULL) == -1)
     errExit("mount --bind APPJAIL_SWAPDIR/console /dev/console");
+  unlink("console");
 
   /* The current TTY is now accessible under /dev/console,
    * however, the original device (like /dev/pts/0) will not
