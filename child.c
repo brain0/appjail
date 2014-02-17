@@ -102,12 +102,12 @@ int child_main(void *arg) {
   strncpy(tmpdir, "/tmp/appjail-XXXXXX", PATH_MAX-1);
   if( mkdtemp(tmpdir) == NULL )
     errExit("mkdtemp");
-  /* Bind the temporary directory to /var/empty
+  /* Bind the temporary directory to APPJAIL_SWAPDIR
    * This isn't nice, but we need a directory that we won't touch */
-  if( cap_mount(tmpdir, "/var/empty", NULL, MS_BIND, NULL) == -1 )
-    errExit("mount --bind TMPDIR /var/empty");
+  if( cap_mount(tmpdir, APPJAIL_SWAPDIR, NULL, MS_BIND, NULL) == -1 )
+    errExit("mount --bind TMPDIR APPJAIL_SWAPDIR");
   /* Change into the temporary directory */
-  if(chdir("/var/empty") == -1)
+  if(chdir(APPJAIL_SWAPDIR) == -1)
     errExit("chdir()");
 
   /* Bind the home directory before we change any other mounts */
@@ -126,8 +126,8 @@ int child_main(void *arg) {
   setup_home_directory();
 
   /* unmount our temporary directory */
-  if( cap_umount2("/var/empty", MNT_DETACH) == -1 )
-    errExit("umount /var/empty");
+  if( cap_umount2(APPJAIL_SWAPDIR, 0) == -1 )
+    errExit("umount APPJAIL_SWAPDIR");
 
   /* Make some permissions consistent */
   cap_chown("/tmp", 0, 0);

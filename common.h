@@ -2,6 +2,8 @@
 
 #define _GNU_SOURCE
 
+#define APPJAIL_SWAPDIR "/var/empty"
+
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>

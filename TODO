@@ -1,3 +1,4 @@
+* change APPJAIL_SWAPDIR to a sane location, which can be changed in configure
 * handle /run: keep, only keep /run/user/$UID, create private /run
 * handle X11 sockets and .Xauthority?
 * handle dbus sockets?
