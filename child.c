@@ -82,7 +82,6 @@ static void setup_shm() {
 }
 
 int child_main(void *arg) {
-  char tmpdir[PATH_MAX];
   appjail_options *opts = (appjail_options*)arg;
 
   drop_caps();
@@ -91,13 +90,8 @@ int child_main(void *arg) {
    * private now, we would lose the ability to keep anything as slave.
    */
   set_mount_propagation_slave();
-  /* Create temporary directory */
-  strncpy(tmpdir, "/tmp/appjail-XXXXXX", PATH_MAX-1);
-  if( mkdtemp(tmpdir) == NULL )
-    errExit("mkdtemp");
-  /* Bind the temporary directory to APPJAIL_SWAPDIR
-   * This isn't nice, but we need a directory that we won't touch */
-  if( cap_mount(tmpdir, APPJAIL_SWAPDIR, NULL, MS_BIND, NULL) == -1 )
+  /* Mount tmpfs to contain our private data to APPJAIL_SWAPDIR*/
+  if( cap_mount("appjail", APPJAIL_SWAPDIR, "tmpfs", 0, "") == -1 )
     errExit("mount --bind TMPDIR APPJAIL_SWAPDIR");
   /* Change into the temporary directory */
   if(chdir(APPJAIL_SWAPDIR) == -1)
