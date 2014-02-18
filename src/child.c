@@ -40,17 +40,17 @@ static void get_tty() {
   close(fd);
   /* Make the current TTY accessible in APPJAIL_SWAPDIR/console */
   if( cap_mount(console, "console", NULL, MS_BIND, NULL) == -1)
-    errExit("mount --bind $TTY APPJAIL_SWAPDIR/console");
+    errExit("mount --bind $TTY " APPJAIL_SWAPDIR "/console");
   /* Make the console bind private */
   if( cap_mount(NULL, "console", NULL, MS_PRIVATE, NULL) == -1)
-    errExit("mount --make-private APPJAIL_SWAPDIR/console");
+    errExit("mount --make-private " APPJAIL_SWAPDIR "/console");
 }
 
 static void setup_tty() {
   int fd;
 
   if( cap_mount("console", "/dev/console", NULL, MS_MOVE, NULL) == -1)
-    errExit("mount --bind APPJAIL_SWAPDIR/console /dev/console");
+    errExit("mount --move " APPJAIL_SWAPDIR "/console /dev/console");
   unlink("console");
 
   /* The current TTY is now accessible under /dev/console,
@@ -92,7 +92,7 @@ int child_main(void *arg) {
   set_mount_propagation_slave();
   /* Mount tmpfs to contain our private data to APPJAIL_SWAPDIR*/
   if( cap_mount("appjail", APPJAIL_SWAPDIR, "tmpfs", 0, "") == -1 )
-    errExit("mount --bind TMPDIR APPJAIL_SWAPDIR");
+    errExit("mount -t tmpfs appjail " APPJAIL_SWAPDIR);
   /* Change into the temporary directory */
   if(chdir(APPJAIL_SWAPDIR) == -1)
     errExit("chdir()");
@@ -118,7 +118,7 @@ int child_main(void *arg) {
 
   /* unmount our temporary directory */
   if( cap_umount2(APPJAIL_SWAPDIR, 0) == -1 )
-    errExit("umount APPJAIL_SWAPDIR");
+    errExit("umount " APPJAIL_SWAPDIR);
 
   /* Make some permissions consistent */
   cap_chown("/tmp", 0, 0);

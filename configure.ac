@@ -7,6 +7,7 @@ AM_INIT_AUTOMAKE
 
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_MKDIR_P
 
 # Check for headers
 AC_CHECK_HEADERS([errno.h fcntl.h limits.h pwd.h sched.h stdio.h stdlib.h string.h sys/capability.h sys/mount.h sys/prctl.h sys/stat.h sys/types.h sys/wait.h unistd.h])
