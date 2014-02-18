@@ -76,11 +76,6 @@ static void setup_devpts() {
     errExit("mount --bind");
 }
 
-static void setup_shm() {
-  if( cap_mount("shm", "/dev/shm", "tmpfs", MS_NODEV | MS_NOSUID, "mode=1777,uid=0,gid=0") == -1)
-    errExit("mount shm");
-}
-
 int child_main(void *arg) {
   appjail_options *opts = (appjail_options*)arg;
 
@@ -91,7 +86,7 @@ int child_main(void *arg) {
    */
   set_mount_propagation_slave();
   /* Mount tmpfs to contain our private data to APPJAIL_SWAPDIR*/
-  if( cap_mount("appjail", APPJAIL_SWAPDIR, "tmpfs", 0, "") == -1 )
+  if( cap_mount("appjail", APPJAIL_SWAPDIR, "tmpfs", MS_NODEV | MS_NOSUID, "") == -1 )
     errExit("mount -t tmpfs appjail " APPJAIL_SWAPDIR);
   /* Change into the temporary directory */
   if(chdir(APPJAIL_SWAPDIR) == -1)
@@ -108,8 +103,8 @@ int child_main(void *arg) {
   setup_path("tmp", "/tmp", 01777);
   setup_path("vartmp", "/var/tmp", 01777);
   setup_path("home", "/home", 0755);
+  setup_path("shm", "/dev/shm", 01777);
   setup_devpts();
-  setup_shm();
 
   /* set up the tty */
   setup_tty();
@@ -124,6 +119,7 @@ int child_main(void *arg) {
   cap_chown("/tmp", 0, 0);
   cap_chown("/var/tmp", 0, 0);
   cap_chown("/home", 0, 0);
+  cap_chown("/dev/shm", 0, 0);
 
   /* We drop all capabilities from the permitted capability set */
   drop_caps_forever();
