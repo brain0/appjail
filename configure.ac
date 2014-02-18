@@ -24,7 +24,7 @@ AC_CHECK_FUNCS([dup2 mkdir setenv clone])
 PKG_CHECK_MODULES([libmount], [mount])
 PKG_CHECK_MODULES([libcap], [libcap])
 
-AM_CONFIG_HEADER([config.h])
-AC_CONFIG_FILES([Makefile])
+AM_CONFIG_HEADER([src/config.h])
+AC_CONFIG_FILES([Makefile src/Makefile])
 
 AC_OUTPUT
