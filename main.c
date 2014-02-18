@@ -43,6 +43,10 @@ int main(int argc, char *argv[]) {
   if (pid1 == -1)
     errExit("clone");
 
+  /* Free some memory that has been malloc()ed by parse_options.
+   * We no longer need it in the parent */
+  free_options_partially(&opts);
+
   /* Wait for child the child to terminate
    * If we were interrupted by a signal, wait again
    */

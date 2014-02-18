@@ -65,3 +65,11 @@ void parse_options(appjail_options *opts, int argc, char *argv[]) {
   }
   opts->argv = &(argv[optind]);
 }
+
+void free_options_partially(appjail_options *opts) {
+  /* unmount directories and shared_directories only contain
+   * pointers to string constants and to parts of the
+   * argument list, we cannot free any of those */
+  free(opts->special_directories.unmount_directories);
+  free(opts->special_directories.shared_directories);
+}

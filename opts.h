@@ -12,3 +12,4 @@ typedef struct {
 } appjail_options;
 
 void parse_options(appjail_options *opts, int argc, char *argv[]);
+void free_options_partially(appjail_options *opts);
