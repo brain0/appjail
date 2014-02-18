@@ -14,14 +14,18 @@ static void usage() {
          "\n");
 }
 
-void parse_options(appjail_options *opts, int argc, char *argv[]) {
+appjail_options *parse_options(int argc, char *argv[]) {
   int opt;
+  appjail_options *opts;
   static struct option long_options[] = {
     { "help",            no_argument,       0,  'h' },
     { "allow-new-privs", no_argument,       0,  'p' },
     { "homedir",         required_argument, 0,  'H' },
     { 0,                 0,                 0,  0   }
   };
+
+  if((opts = malloc(sizeof(appjail_options))) == NULL)
+    errExit("malloc");
 
   /* defaults */
   opts->allow_new_privs = false;
@@ -64,12 +68,15 @@ void parse_options(appjail_options *opts, int argc, char *argv[]) {
     }
   }
   opts->argv = &(argv[optind]);
+
+  return opts;
 }
 
-void free_options_partially(appjail_options *opts) {
+void free_options(appjail_options *opts) {
   /* unmount directories and shared_directories only contain
    * pointers to string constants and to parts of the
    * argument list, we cannot free any of those */
   free(opts->special_directories.unmount_directories);
   free(opts->special_directories.shared_directories);
+  free(opts);
 }
