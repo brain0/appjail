@@ -45,6 +45,7 @@ int main(int argc, char *argv[]) {
 
   /* Free some memory */
   free_options(opts);
+  free(stack);
 
   /* Wait for child the child to terminate
    * If we were interrupted by a signal, wait again
