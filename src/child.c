@@ -24,7 +24,7 @@ static void setup_path(const char *name, const char *path, mode_t mode) {
   if( cap_mount(p, path, NULL, MS_BIND, NULL) == -1 )
     errExit("mount --bind");
   if( cap_mount(NULL, path, NULL, MS_PRIVATE, NULL) == -1)
-    errExit("mount --make-rprivate");
+    errExit("mount --make-private");
 }
 
 static void get_tty() {
