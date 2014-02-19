@@ -47,11 +47,9 @@ int main(int argc, char *argv[]) {
   free_options(opts);
   free(stack);
 
-  /* Wait for child the child to terminate
-   * If we were interrupted by a signal, wait again
-   */
+  /* Wait for child the child to terminate */
   if(waitpid(pid1, &status, 0) == -1)
-      errExit("waitpid");
+    errExit("waitpid");
 
   if(WIFEXITED(status))
     return WEXITSTATUS(status);
