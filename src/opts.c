@@ -15,6 +15,8 @@ static void usage() {
          "  -p, --allow-new-privs   Don't prevent setuid binaries from raising privileges.\n"
          "  --keep-shm              Keep the host's /dev/shm directory.\n"
          "  -H, --homedir <DIR>     Use DIR as home directory instead of a temporary one.\n"
+         "  -U, --unmount <DIR>     Unmount DIR inside the jail.\n"
+         "  -S, --shared <DIR>      Do not force private mount propagation on DIR.\n"
          "\n");
 }
 
@@ -59,6 +61,8 @@ appjail_options *parse_options(int argc, char *argv[]) {
     { "allow-new-privs", no_argument,       0,  'p'  },
     { "homedir",         required_argument, 0,  'H'  },
     { "keep-shm",        no_argument,       0,  256  },
+    { "unmount",         required_argument, 0,  'U'  },
+    { "shared",          required_argument, 0,  'S'  },
     { 0,                 0,                 0,  0    }
   };
 
@@ -79,7 +83,7 @@ appjail_options *parse_options(int argc, char *argv[]) {
   shared_directories_num = 1;
   opts->shared_directories[0] = NULL;
 
-  while((opt = getopt_long(argc, argv, "+:hpH:", long_options, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, "+:hpH:U:S:", long_options, NULL)) != -1) {
     switch(opt) {
       case 'h':
         usage();
@@ -93,6 +97,12 @@ appjail_options *parse_options(int argc, char *argv[]) {
         break;
       case 256:
         opts->keep_shm = true;
+        break;
+      case 'U':
+        ADD_ARRAY_ENTRY_UNMOUNT(optarg);
+        break;
+      case 'S':
+        ADD_ARRAY_ENTRY_SHARED(optarg);
         break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);
