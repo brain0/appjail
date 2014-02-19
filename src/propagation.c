@@ -30,13 +30,13 @@ static void unmount_recursive(struct libmnt_table *t, struct libmnt_fs *r) {
 
 static bool has_beginning_of_path(const char **l, const char *p) {
   const char **i;
-  size_t len;
+  size_t len, lenp;
 
   i = l;
   while(*i != NULL) {
     len = strlen(*i);
-    if(!strncmp(*i, p, len))
-      if(strlen(p) == len || (strlen(p) > len && p[len] == '/'))
+    lenp = strlen(p);
+    if(!strncmp(*i, p, len) && (lenp == len || (lenp > len && p[len] == '/')))
         return true;
     ++i;
   }
