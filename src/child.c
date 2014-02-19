@@ -103,7 +103,8 @@ int child_main(void *arg) {
   setup_path("tmp", "/tmp", 01777);
   setup_path("vartmp", "/var/tmp", 01777);
   setup_path("home", "/home", 0755);
-  setup_path("shm", "/dev/shm", 01777);
+  if(!opts->keep_shm)
+    setup_path("shm", "/dev/shm", 01777);
   setup_devpts();
 
   /* set up the tty */
@@ -119,7 +120,8 @@ int child_main(void *arg) {
   cap_chown("/tmp", 0, 0);
   cap_chown("/var/tmp", 0, 0);
   cap_chown("/home", 0, 0);
-  cap_chown("/dev/shm", 0, 0);
+  if(!opts->keep_shm)
+    cap_chown("/dev/shm", 0, 0);
 
   /* We drop all capabilities from the permitted capability set */
   drop_caps_forever();

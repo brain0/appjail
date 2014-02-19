@@ -5,6 +5,7 @@ typedef enum { false, true } bool;
 typedef struct {
 
   bool allow_new_privs;
+  bool keep_shm;
   const char *homedir;
 
   char **argv;

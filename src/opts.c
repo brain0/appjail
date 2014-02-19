@@ -13,6 +13,7 @@ static void usage() {
          "Options:\n"
          "  -h, --help              Print command help and exit.\n"
          "  -p, --allow-new-privs   Don't prevent setuid binaries from raising privileges.\n"
+         "  --keep-shm              Keep the host's /dev/shm directory.\n"
          "  -H, --homedir <DIR>     Use DIR as home directory instead of a temporary one.\n"
          "\n");
 }
@@ -54,10 +55,11 @@ appjail_options *parse_options(int argc, char *argv[]) {
       shared_directories_size;
   appjail_options *opts;
   static struct option long_options[] = {
-    { "help",            no_argument,       0,  'h' },
-    { "allow-new-privs", no_argument,       0,  'p' },
-    { "homedir",         required_argument, 0,  'H' },
-    { 0,                 0,                 0,  0   }
+    { "help",            no_argument,       0,  'h'  },
+    { "allow-new-privs", no_argument,       0,  'p'  },
+    { "homedir",         required_argument, 0,  'H'  },
+    { "keep-shm",        no_argument,       0,  256  },
+    { 0,                 0,                 0,  0    }
   };
 
   if((opts = malloc(sizeof(appjail_options))) == NULL)
@@ -65,6 +67,7 @@ appjail_options *parse_options(int argc, char *argv[]) {
 
   /* defaults */
   opts->allow_new_privs = false;
+  opts->keep_shm = false;
   opts->homedir = NULL;
   /* initialize directory lists */
   opts->unmount_directories = malloc(NUM_ENTRIES*sizeof(char*));
@@ -88,6 +91,9 @@ appjail_options *parse_options(int argc, char *argv[]) {
       case 'H':
         opts->homedir = optarg;
         break;
+      case 256:
+        opts->keep_shm = true;
+        break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);
         exit(EXIT_FAILURE);;
@@ -104,7 +110,10 @@ appjail_options *parse_options(int argc, char *argv[]) {
   }
   opts->argv = &(argv[optind]);
 
-  ADD_ARRAY_ENTRY_UNMOUNT("/dev/shm");
+  if(opts->keep_shm)
+    ADD_ARRAY_ENTRY_SHARED("/dev/shm");
+  else
+    ADD_ARRAY_ENTRY_UNMOUNT("/dev/shm");
   ADD_ARRAY_ENTRY_UNMOUNT("/dev/pts");
   ADD_ARRAY_ENTRY_UNMOUNT("/tmp");
   ADD_ARRAY_ENTRY_UNMOUNT("/var/tmp");
