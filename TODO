@@ -1,4 +1,3 @@
-* clean up unmount_directories and shared_directories handling, allow command line options for it
 * add optional size limits for the tmpfs instances (SWAPDIR, /dev/shm)
 * allow binding more file systems under /home
 * (maybe) allow binding a custom {/var,}/tmp

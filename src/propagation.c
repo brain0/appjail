@@ -28,8 +28,8 @@ static void unmount_recursive(struct libmnt_table *t, struct libmnt_fs *r) {
   mnt_free_iter(i);
 }
 
-static bool has_beginning_of_path(const char **l, const char *p) {
-  const char **i;
+static bool has_beginning_of_path(char **l, const char *p) {
+  char **i;
   size_t len, lenp;
 
   i = l;
@@ -50,14 +50,14 @@ static void unmount_or_make_private(struct libmnt_table *t, struct libmnt_fs *r,
   if(!strcmp(path, APPJAIL_SWAPDIR))
     return;
 
-  if(has_beginning_of_path(opts->special_directories.unmount_directories, path)) {
+  if(has_beginning_of_path(opts->unmount_directories, path)) {
     unmount_recursive(t, r);
   }
   else {
     struct libmnt_iter *i = mnt_new_iter(MNT_ITER_FORWARD);
     struct libmnt_fs *f;
 
-    if(!has_beginning_of_path(opts->special_directories.shared_directories, path))
+    if(!has_beginning_of_path(opts->shared_directories, path))
       if(cap_mount(NULL, path, NULL, MS_PRIVATE, NULL) == -1)
         errExit("mount --make-private");
 

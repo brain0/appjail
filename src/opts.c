@@ -1,6 +1,9 @@
 #include "common.h"
 #include "opts.h"
 #include <getopt.h>
+#include <string.h>
+
+#define NUM_ENTRIES 10
 
 static void usage() {
   printf("Usage: appjail [OPTIONS] [COMMAND]\n"
@@ -14,8 +17,41 @@ static void usage() {
          "\n");
 }
 
+char *remove_trailing_slash(const char *p) {
+  char *r = strdup(p);
+  size_t len = strlen(r);
+
+  while(len > 0 && r[len-1] == '/') {
+    r[--len] = '\0';
+  }
+  return r;
+}
+
+static void add_array_entry(char ***array, unsigned int *size, unsigned int *num, char *entry) {
+  if(*num >= *size)
+    if((*array = realloc(*array, (*size*=2)*sizeof(char*))) == NULL)
+      errExit("realloc");
+  if((*array)[*num-1] != NULL)
+    errExitNoErrno("Internal error");
+  (*array)[*num-1] = entry;
+  (*array)[(*num)++] = NULL;
+}
+
+#define ADD_ARRAY_ENTRY_UNMOUNT(p) do {\
+    char *t = remove_trailing_slash(p);\
+    size_t len = strlen(t), lenp = strlen(APPJAIL_SWAPDIR);\
+    if(!strncmp(APPJAIL_SWAPDIR, t, len) && (lenp == len || (lenp > len && APPJAIL_SWAPDIR[len] == '/')))\
+      errExitNoErrno("Unmount rules would unmount " APPJAIL_SWAPDIR ", aborting.");\
+    add_array_entry(&(opts->unmount_directories), &unmount_directories_size, &unmount_directories_num, t);\
+  } while(0)
+#define ADD_ARRAY_ENTRY_SHARED(p) add_array_entry(&(opts->shared_directories), &shared_directories_size, &shared_directories_num, remove_trailing_slash(p))
+
 appjail_options *parse_options(int argc, char *argv[]) {
   int opt;
+  unsigned int unmount_directories_num,
+      unmount_directories_size,
+      shared_directories_num,
+      shared_directories_size;
   appjail_options *opts;
   static struct option long_options[] = {
     { "help",            no_argument,       0,  'h' },
@@ -30,16 +66,15 @@ appjail_options *parse_options(int argc, char *argv[]) {
   /* defaults */
   opts->allow_new_privs = false;
   opts->homedir = NULL;
-  /* */
-  opts->special_directories.unmount_directories = malloc(6*sizeof(char*));
-  opts->special_directories.unmount_directories[0] = "/dev/shm";
-  opts->special_directories.unmount_directories[1] = "/dev/pts";
-  opts->special_directories.unmount_directories[2] = "/tmp";
-  opts->special_directories.unmount_directories[3] = "/var/tmp";
-  opts->special_directories.unmount_directories[4] = "/home";
-  opts->special_directories.unmount_directories[5] = NULL;
-  opts->special_directories.shared_directories = malloc(sizeof(char*));
-  opts->special_directories.shared_directories[0] = NULL;
+  /* initialize directory lists */
+  opts->unmount_directories = malloc(NUM_ENTRIES*sizeof(char*));
+  unmount_directories_size = NUM_ENTRIES;
+  unmount_directories_num = 1;
+  opts->unmount_directories[0] = NULL;
+  opts->shared_directories = malloc(NUM_ENTRIES*sizeof(char*));
+  shared_directories_size = NUM_ENTRIES;
+  shared_directories_num = 1;
+  opts->shared_directories[0] = NULL;
 
   while((opt = getopt_long(argc, argv, "+:hpH:", long_options, NULL)) != -1) {
     switch(opt) {
@@ -69,14 +104,22 @@ appjail_options *parse_options(int argc, char *argv[]) {
   }
   opts->argv = &(argv[optind]);
 
+  ADD_ARRAY_ENTRY_UNMOUNT("/dev/shm");
+  ADD_ARRAY_ENTRY_UNMOUNT("/dev/pts");
+  ADD_ARRAY_ENTRY_UNMOUNT("/tmp");
+  ADD_ARRAY_ENTRY_UNMOUNT("/var/tmp");
+  ADD_ARRAY_ENTRY_UNMOUNT("/home");
+
   return opts;
 }
 
 void free_options(appjail_options *opts) {
-  /* unmount directories and shared_directories only contain
-   * pointers to string constants and to parts of the
-   * argument list, we cannot free any of those */
-  free(opts->special_directories.unmount_directories);
-  free(opts->special_directories.shared_directories);
+  char** p;
+  for(p = opts->unmount_directories; *p!=NULL; ++p)
+    free(*p);
+  for(p = opts->shared_directories; *p!=NULL; ++p)
+    free(*p);
+  free(opts->unmount_directories);
+  free(opts->shared_directories);
   free(opts);
 }
