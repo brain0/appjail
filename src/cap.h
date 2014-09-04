@@ -1,8 +1,10 @@
 #pragma once
 
+#include "common.h"
 #include <sys/capability.h>
 #include <unistd.h>
 
+bool want_cap(cap_value_t c);
 void need_cap(cap_value_t c);
 void drop_caps();
 void drop_caps_forever();

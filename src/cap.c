@@ -1,16 +1,22 @@
-#include "common.h"
 #include "cap.h"
 #include <sys/mount.h>
 
-void need_cap(cap_value_t c) {
+bool want_cap(cap_value_t c) {
+  bool ret;
   cap_t caps;
   caps = cap_get_proc();
   cap_clear_flag(caps, CAP_EFFECTIVE);
   cap_clear_flag(caps, CAP_INHERITABLE);
   cap_set_flag(caps, CAP_EFFECTIVE, 1, &c, CAP_SET);
-  if(cap_set_proc(caps) == -1)
-    errExit("cap_set_proc");
+  ret = cap_set_proc(caps) != -1;
   cap_free(caps);
+
+  return ret;
+}
+
+void need_cap(cap_value_t c) {
+  if(!want_cap(c))
+    errExit("cap_set_proc");
 }
 
 void drop_caps() {
