@@ -17,3 +17,7 @@ typedef enum { false, true } bool;
   fprintf(stderr, err "\n");\
   exit(EXIT_FAILURE);\
   } while (0)
+
+#define errWarn(msg) do { \
+  perror(msg);\
+  } while (0)
