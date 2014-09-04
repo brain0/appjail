@@ -1,6 +1,6 @@
 #pragma once
 
-typedef enum { false, true } bool;
+#include "common.h"
 
 typedef struct {
 

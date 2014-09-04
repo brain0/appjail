@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef enum { false, true } bool;
+
 #define errExit(msg) do { \
   perror(msg);\
   exit(EXIT_FAILURE);\
