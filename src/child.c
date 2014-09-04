@@ -4,6 +4,7 @@
 #include "opts.h"
 #include "home.h"
 #include "propagation.h"
+#include "command.h"
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -12,6 +13,57 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+static void get_x11() {
+  char *cmd_argv[8];
+  char *display;
+
+  if( mkdir(APPJAIL_SWAPDIR "/X11-unix", 0755) == -1 )
+    errExit("mkdir");
+  if( cap_mount("/tmp/.X11-unix", APPJAIL_SWAPDIR "/X11-unix", NULL, MS_BIND, NULL) == -1 )
+    errExit("mount --bind");
+  if( cap_mount(NULL, APPJAIL_SWAPDIR "/X11-unix", NULL, MS_PRIVATE, NULL) == -1 )
+    errExit("mount --make-private");
+
+  display = getenv("DISPLAY");
+  if( display == NULL )
+    return;
+
+  cmd_argv[0] = "xauth";
+  cmd_argv[1] = "-f";
+  cmd_argv[2] = APPJAIL_SWAPDIR "/Xauthority";
+  cmd_argv[3] = "generate";
+  cmd_argv[4] = display;
+  cmd_argv[5] = "MIT-MAGIC-COOKIE-1";
+  cmd_argv[6] = "trusted";
+  cmd_argv[7] = NULL;
+  if( run_command(cmd_argv[0], cmd_argv) != 0 )
+    errExit("xauth");
+}
+
+static void setup_x11() {
+  char *home, xauthority[PATH_MAX], *cmd_argv[4];
+
+  if( mkdir("/tmp/.X11-unix", 0755) == -1 )
+    errExit("mkdir");
+  if( cap_mount(APPJAIL_SWAPDIR "/X11-unix", "/tmp/.X11-unix", NULL, MS_MOVE, NULL) == -1 )
+    errExit("mount --move " APPJAIL_SWAPDIR "/X11-unix /tmp/.X11-unix");
+  rmdir("X11-unix");
+
+  home = getenv("HOME");
+  if( home == NULL )
+    return;
+
+  snprintf(xauthority, PATH_MAX-1, "%s/.Xauthority", home);
+  cmd_argv[0] = "mv";
+  cmd_argv[1] = APPJAIL_SWAPDIR "/Xauthority";
+  cmd_argv[2] = xauthority;
+  cmd_argv[3] = NULL;
+  if( run_command(cmd_argv[0], cmd_argv) == -1 )
+    errExit("mv");
+}
 
 static void setup_path(const char *name, const char *path, mode_t mode) {
   char p[PATH_MAX];
@@ -23,7 +75,7 @@ static void setup_path(const char *name, const char *path, mode_t mode) {
     errExit("chmod");
   if( cap_mount(p, path, NULL, MS_BIND, NULL) == -1 )
     errExit("mount --bind");
-  if( cap_mount(NULL, path, NULL, MS_PRIVATE, NULL) == -1)
+  if( cap_mount(NULL, path, NULL, MS_PRIVATE, NULL) == -1 )
     errExit("mount --make-private");
 }
 
@@ -95,6 +147,9 @@ int child_main(void *arg) {
   /* Bind directories and files that may disappear */
   get_home_directory(opts->homedir);
   get_tty();
+  if(opts->keep_x11)
+    /* Get X11 socket directory and xauth data */
+    get_x11();
 
   /* clean up the mounts, making almost everything private */
   sanitize_mounts(opts);
@@ -111,6 +166,9 @@ int child_main(void *arg) {
   setup_tty();
   /* set up home directory using the one we bound earlier */
   setup_home_directory();
+  if(opts->keep_x11)
+    /* Set up X11 socket directory and xauth data */
+    setup_x11();
 
   /* unmount our temporary directory */
   if( cap_umount2(APPJAIL_SWAPDIR, 0) == -1 )

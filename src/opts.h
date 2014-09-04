@@ -12,6 +12,7 @@ typedef struct {
 
   char **unmount_directories;
   char **shared_directories;
+  bool keep_x11;
 } appjail_options;
 
 appjail_options *parse_options(int argc, char *argv[]);
