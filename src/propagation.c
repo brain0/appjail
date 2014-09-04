@@ -78,7 +78,7 @@ void sanitize_mounts(appjail_options *opts) {
   t = mnt_new_table();
   mnt_table_set_parser_errcb(t, error_cb);
 
-  /* make / a private monut */
+  /* make / a private mount */
   if( cap_mount(NULL, "/", NULL, MS_PRIVATE, NULL) == -1)
     errExit("mount --make-private /");
 
