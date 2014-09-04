@@ -13,6 +13,7 @@ int main(int argc, char *argv[]) {
   char *stack, *stackTop;
   pid_t pid1;
   int status;
+  int clone_flags;
   appjail_options *opts;
 
   /* Drop all privileges we might accidentally have */
@@ -35,7 +36,10 @@ int main(int argc, char *argv[]) {
 
   /* Clone a child in an isolated namespace */
   need_cap(CAP_SYS_ADMIN);
-  pid1 = clone(child_main, stackTop, CLONE_NEWIPC | CLONE_NEWNS | CLONE_NEWPID | SIGCHLD, (void*)opts);
+  clone_flags = CLONE_NEWIPC | CLONE_NEWNS | CLONE_NEWPID | SIGCHLD;
+  if(opts->unshare_network)
+    clone_flags |= CLONE_NEWNET;
+  pid1 = clone(child_main, stackTop, clone_flags, (void*)opts);
   /* We drop all capabilities from the permitted capability set */
   drop_caps_forever();
 

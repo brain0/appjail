@@ -18,4 +18,6 @@ To compile and install appjail, run the following commands:
  $ make
 Then, as root, run
  # make install
+ # setcap cap_sys_admin,cap_chown,cap_net_admin=p /usr/local/bin/appjail
+If you don't need the -N option, run instead
  # setcap cap_sys_admin,cap_chown=p /usr/local/bin/appjail

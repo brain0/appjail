@@ -18,6 +18,7 @@ static void usage() {
          "  -U, --unmount <DIR>     Unmount DIR inside the jail.\n"
          "  -S, --shared <DIR>      Do not force private mount propagation on DIR.\n"
          "  -X, --x11               Allow X11 access.\n"
+         "  -N, --private-network   Isolate from the host network.\n"
          "\n");
 }
 
@@ -65,6 +66,7 @@ appjail_options *parse_options(int argc, char *argv[]) {
     { "unmount",         required_argument, 0,  'U'  },
     { "shared",          required_argument, 0,  'S'  },
     { "x11",             no_argument,       0,  'X'  },
+    { "private-network", no_argument,       0,  'N'  },
     { 0,                 0,                 0,  0    }
   };
 
@@ -76,6 +78,7 @@ appjail_options *parse_options(int argc, char *argv[]) {
   opts->keep_shm = false;
   opts->homedir = NULL;
   opts->keep_x11 = false;
+  opts->unshare_network = false;
   /* initialize directory lists */
   opts->unmount_directories = malloc(NUM_ENTRIES*sizeof(char*));
   unmount_directories_size = NUM_ENTRIES;
@@ -86,7 +89,7 @@ appjail_options *parse_options(int argc, char *argv[]) {
   shared_directories_num = 1;
   opts->shared_directories[0] = NULL;
 
-  while((opt = getopt_long(argc, argv, "+:hpH:U:S:X", long_options, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, "+:hpH:U:S:XN", long_options, NULL)) != -1) {
     switch(opt) {
       case 'h':
         usage();
@@ -109,6 +112,9 @@ appjail_options *parse_options(int argc, char *argv[]) {
         break;
       case 'X':
         opts->keep_x11 = true;
+        break;
+      case 'N':
+        opts->unshare_network = true;
         break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);

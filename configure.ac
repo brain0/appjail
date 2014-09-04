@@ -24,6 +24,7 @@ AC_CHECK_FUNCS([dup2 mkdir setenv clone])
 
 PKG_CHECK_MODULES([libmount], [mount])
 PKG_CHECK_MODULES([libcap], [libcap])
+PKG_CHECK_MODULES([libnl], [libnl-route-3.0])
 
 AM_CONFIG_HEADER([src/config.h])
 AC_CONFIG_FILES([Makefile src/Makefile])
