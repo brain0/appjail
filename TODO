@@ -1,6 +1,13 @@
+urgent:
+
+* handle /run: keep, only keep /run/user/$UID, create private /run
+* make defaults for --keep and --keep-full configurable
+* add an option to mask directories
+
+maybe:
+
 * add optional size limits for the tmpfs instances (SWAPDIR, /dev/shm)
 * allow binding more file systems under /home
 * (maybe) allow binding a custom {/var,}/tmp
-* handle /run: keep, only keep /run/user/$UID, create private /run
 * handle dbus sockets?
 * add optional seccomp restrictions?
