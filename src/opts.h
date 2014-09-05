@@ -11,8 +11,9 @@ typedef struct {
 
   char **argv;
 
-  char **unmount_directories;
-  char **shared_directories;
+  char **keep_mounts, **keep_mounts_full;
+  char **shared_mounts;
+  char **special_mounts;
   bool keep_x11;
   bool unshare_network;
 } appjail_options;

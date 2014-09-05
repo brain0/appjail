@@ -1,8 +1,13 @@
 #include "common.h"
-#include "propagation.h"
+#include "mounts.h"
 #include "cap.h"
 #include <libmount.h>
 #include <string.h>
+
+void init_libmount() {
+  /* libmount setup */
+  mnt_init_debug(0);
+}
 
 void set_mount_propagation_slave() {
   if( cap_mount(NULL, "/", NULL, MS_REC | MS_SLAVE, NULL) == -1)
@@ -28,16 +33,37 @@ static void unmount_recursive(struct libmnt_table *t, struct libmnt_fs *r) {
   mnt_free_iter(i);
 }
 
-static bool has_beginning_of_path(char **l, const char *p) {
+typedef enum {
+  HAS_CHILD_OF_NEEDLE,
+  HAS_PARENT_OF_NEEDLE,
+  HAS_EXACT_PATH
+} has_path_mode_t;
+
+static bool has_path(char **l, const char *p, has_path_mode_t mode) {
   char **i;
   size_t len, lenp;
 
   i = l;
+  lenp = strlen(p);
+  /* Deal with trailing slashes */
+  if(p[lenp-1] == '/')
+    lenp--;
   while(*i != NULL) {
     len = strlen(*i);
-    lenp = strlen(p);
-    if(!strncmp(*i, p, len) && (lenp == len || (lenp > len && p[len] == '/')))
-        return true;
+    switch(mode) {
+      case HAS_CHILD_OF_NEEDLE:
+        if(!strncmp(*i, p, lenp) && (lenp == len || (len > lenp && (*i)[lenp] == '/')))
+          return true;
+        break;
+      case HAS_PARENT_OF_NEEDLE:
+        if(!strncmp(*i, p, len) && (lenp == len || (lenp > len && p[len] == '/')))
+          return true;
+        break;
+      case HAS_EXACT_PATH:
+        if(!strcmp(*i, p))
+          return true;
+        break;
+    }
     ++i;
   }
 
@@ -47,17 +73,23 @@ static bool has_beginning_of_path(char **l, const char *p) {
 static void unmount_or_make_private(struct libmnt_table *t, struct libmnt_fs *r, appjail_options *opts) {
   const char *path = mnt_fs_get_target(r);
 
-  if(!strcmp(path, APPJAIL_SWAPDIR))
+  if(has_path(opts->special_mounts, path, HAS_EXACT_PATH))
     return;
 
-  if(has_beginning_of_path(opts->unmount_directories, path)) {
+  if(
+        strcmp(path, "/")
+     && !has_path(opts->keep_mounts, path, HAS_CHILD_OF_NEEDLE)
+     && !has_path(opts->keep_mounts_full, path, HAS_CHILD_OF_NEEDLE)
+     && !has_path(opts->keep_mounts_full, path, HAS_PARENT_OF_NEEDLE)
+     && !has_path(opts->special_mounts, path, HAS_CHILD_OF_NEEDLE)
+    ) {
     unmount_recursive(t, r);
   }
   else {
     struct libmnt_iter *i = mnt_new_iter(MNT_ITER_FORWARD);
     struct libmnt_fs *f;
 
-    if(!has_beginning_of_path(opts->shared_directories, path))
+    if(!has_path(opts->shared_mounts, path, HAS_PARENT_OF_NEEDLE))
       if(cap_mount(NULL, path, NULL, MS_PRIVATE, NULL) == -1)
         errExit("mount --make-private");
 
@@ -73,14 +105,8 @@ void sanitize_mounts(appjail_options *opts) {
   struct libmnt_fs *f;
   struct libmnt_table *t;
 
-  /* libmount setup */
-  mnt_init_debug(0);
   t = mnt_new_table();
   mnt_table_set_parser_errcb(t, error_cb);
-
-  /* make / a private mount */
-  if( cap_mount(NULL, "/", NULL, MS_PRIVATE, NULL) == -1)
-    errExit("mount --make-private /");
 
   /* parse /proc/self/mountinfo */
   mnt_table_parse_file(t, "/proc/self/mountinfo");
@@ -88,7 +114,8 @@ void sanitize_mounts(appjail_options *opts) {
   /* First, handle /proc - umount /proc recursively */
   f = mnt_table_find_mountpoint(t, "/proc", MNT_ITER_FORWARD);
   if(f != NULL) {
-    unmount_recursive(t, f);
+    if(!strcmp("/proc", mnt_fs_get_target(f)))
+      unmount_recursive(t, f);
     mnt_unref_fs(f);
   }
 
@@ -104,6 +131,28 @@ void sanitize_mounts(appjail_options *opts) {
     errExitNoErrno("Error while processing mountinfo");
   unmount_or_make_private(t, f, opts);
   mnt_unref_fs(f);
+
+  /* free the libmount data */
+  mnt_unref_table(t);
+}
+
+void unmount_directory(const char *path) {
+  struct libmnt_fs *f;
+  struct libmnt_table *t;
+
+  t = mnt_new_table();
+  mnt_table_set_parser_errcb(t, error_cb);
+
+  /* parse /proc/self/mountinfo */
+  mnt_table_parse_file(t, "/proc/self/mountinfo");
+
+  /* Unmount path */
+  f = mnt_table_find_mountpoint(t, path, MNT_ITER_FORWARD);
+  if(f != NULL) {
+    if(!strcmp(path, mnt_fs_get_target(f)))
+      unmount_recursive(t, f);
+    mnt_unref_fs(f);
+  }
 
   /* free the libmount data */
   mnt_unref_table(t);

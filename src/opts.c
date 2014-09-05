@@ -15,8 +15,10 @@ static void usage() {
          "  -p, --allow-new-privs   Don't prevent setuid binaries from raising privileges.\n"
          "  --keep-shm              Keep the host's /dev/shm directory.\n"
          "  -H, --homedir <DIR>     Use DIR as home directory instead of a temporary one.\n"
-         "  -U, --unmount <DIR>     Unmount DIR inside the jail.\n"
-         "  -S, --shared <DIR>      Do not force private mount propagation on DIR.\n"
+         "  -K, --keep <DIR>        Do not Unmount DIR inside the jail.\n"
+         "                          This option also affects all mounts that are parents of DIR.\n"
+         "  --keep-full <DIR>       Like --keep, but also affects all submounts of DIR.\n"
+         "  -S, --shared <DIR>      Do not force private mount propagation on submounts of DIR.\n"
          "  -X, --x11               Allow X11 access.\n"
          "  -N, --private-network   Isolate from the host network.\n"
          "\n");
@@ -42,28 +44,26 @@ static void add_array_entry(char ***array, unsigned int *size, unsigned int *num
   (*array)[(*num)++] = NULL;
 }
 
-#define ADD_ARRAY_ENTRY_UNMOUNT(p) do {\
-    char *t = remove_trailing_slash(p);\
-    size_t len = strlen(t), lenp = strlen(APPJAIL_SWAPDIR);\
-    if(!strncmp(APPJAIL_SWAPDIR, t, len) && (lenp == len || (lenp > len && APPJAIL_SWAPDIR[len] == '/')))\
-      errExitNoErrno("Unmount rules would unmount " APPJAIL_SWAPDIR ", aborting.");\
-    add_array_entry(&(opts->unmount_directories), &unmount_directories_size, &unmount_directories_num, t);\
-  } while(0)
-#define ADD_ARRAY_ENTRY_SHARED(p) add_array_entry(&(opts->shared_directories), &shared_directories_size, &shared_directories_num, remove_trailing_slash(p))
+#define ADD_ARRAY_ENTRY_KEEP(p) add_array_entry(&(opts->keep_mounts), &keep_mounts_size, &keep_mounts_num, remove_trailing_slash(p))
+#define ADD_ARRAY_ENTRY_KEEP_FULL(p) add_array_entry(&(opts->keep_mounts_full), &keep_mounts_full_size, &keep_mounts_full_num, remove_trailing_slash(p))
+#define ADD_ARRAY_ENTRY_SHARED(p) add_array_entry(&(opts->shared_mounts), &shared_mounts_size, &shared_mounts_num, remove_trailing_slash(p))
 
 appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   int opt;
-  unsigned int unmount_directories_num,
-      unmount_directories_size,
-      shared_directories_num,
-      shared_directories_size;
+  unsigned int keep_mounts_num,
+      keep_mounts_size,
+      keep_mounts_full_num,
+      keep_mounts_full_size,
+      shared_mounts_num,
+      shared_mounts_size;
   appjail_options *opts;
   static struct option long_options[] = {
     { "help",            no_argument,       0,  'h'  },
     { "allow-new-privs", no_argument,       0,  'p'  },
     { "homedir",         required_argument, 0,  'H'  },
     { "keep-shm",        no_argument,       0,  256  },
-    { "unmount",         required_argument, 0,  'U'  },
+    { "keep",            required_argument, 0,  'K'  },
+    { "keep-full",       required_argument, 0,  257  },
     { "shared",          required_argument, 0,  'S'  },
     { "x11",             no_argument,       0,  'X'  },
     { "private-network", no_argument,       0,  'N'  },
@@ -80,16 +80,20 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   opts->keep_x11 = false;
   opts->unshare_network = false;
   /* initialize directory lists */
-  opts->unmount_directories = malloc(NUM_ENTRIES*sizeof(char*));
-  unmount_directories_size = NUM_ENTRIES;
-  unmount_directories_num = 1;
-  opts->unmount_directories[0] = NULL;
-  opts->shared_directories = malloc(NUM_ENTRIES*sizeof(char*));
-  shared_directories_size = NUM_ENTRIES;
-  shared_directories_num = 1;
-  opts->shared_directories[0] = NULL;
+  opts->keep_mounts = malloc(NUM_ENTRIES*sizeof(char*));
+  keep_mounts_size = NUM_ENTRIES;
+  keep_mounts_num = 1;
+  opts->keep_mounts[0] = NULL;
+  opts->keep_mounts_full = malloc(NUM_ENTRIES*sizeof(char*));
+  keep_mounts_full_size = NUM_ENTRIES;
+  keep_mounts_full_num = 1;
+  opts->keep_mounts_full[0] = NULL;
+  opts->shared_mounts = malloc(NUM_ENTRIES*sizeof(char*));
+  shared_mounts_size = NUM_ENTRIES;
+  shared_mounts_num = 1;
+  opts->shared_mounts[0] = NULL;
 
-  while((opt = getopt_long(argc, argv, "+:hpH:U:S:XN", long_options, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, "+:hpH:K:S:XN", long_options, NULL)) != -1) {
     switch(opt) {
       case 'h':
         usage();
@@ -106,8 +110,11 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
       case 256:
         opts->keep_shm = true;
         break;
-      case 'U':
-        ADD_ARRAY_ENTRY_UNMOUNT(optarg);
+      case 'K':
+        ADD_ARRAY_ENTRY_KEEP(optarg);
+        break;
+      case 257:
+        ADD_ARRAY_ENTRY_KEEP_FULL(optarg);
         break;
       case 'S':
         ADD_ARRAY_ENTRY_SHARED(optarg);
@@ -134,25 +141,27 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   }
   opts->argv = &(argv[optind]);
 
-  if(opts->keep_shm)
-    ADD_ARRAY_ENTRY_SHARED("/dev/shm");
-  else
-    ADD_ARRAY_ENTRY_UNMOUNT("/dev/shm");
-  ADD_ARRAY_ENTRY_UNMOUNT("/dev/pts");
-  ADD_ARRAY_ENTRY_UNMOUNT("/tmp");
-  ADD_ARRAY_ENTRY_UNMOUNT("/var/tmp");
-  ADD_ARRAY_ENTRY_UNMOUNT("/home");
+  opts->special_mounts = malloc(5*sizeof(char*));
+  opts->special_mounts[0] = "/dev";
+  opts->special_mounts[1] = "/proc";
+  opts->special_mounts[2] = "/run";
+  opts->special_mounts[3] = APPJAIL_SWAPDIR;
+  opts->special_mounts[4] = NULL;
 
   return opts;
 }
 
 void free_options(appjail_options *opts) {
   char** p;
-  for(p = opts->unmount_directories; *p!=NULL; ++p)
+  for(p = opts->keep_mounts; *p!=NULL; ++p)
     free(*p);
-  for(p = opts->shared_directories; *p!=NULL; ++p)
+  for(p = opts->keep_mounts_full; *p!=NULL; ++p)
     free(*p);
-  free(opts->unmount_directories);
-  free(opts->shared_directories);
+  for(p = opts->shared_mounts; *p!=NULL; ++p)
+    free(*p);
+  free(opts->keep_mounts);
+  free(opts->keep_mounts_full);
+  free(opts->shared_mounts);
+  free(opts->special_mounts);
   free(opts);
 }

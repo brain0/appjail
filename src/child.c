@@ -3,7 +3,7 @@
 #include "child.h"
 #include "opts.h"
 #include "home.h"
-#include "propagation.h"
+#include "mounts.h"
 #include "command.h"
 #include "network.h"
 #include <sys/mount.h>
@@ -78,6 +78,7 @@ static void setup_path(const char *name, const char *path, mode_t mode) {
     errExit("mkdir");
   if( chmod(p, mode) == -1 )
     errExit("chmod");
+  unmount_directory(path);
   if( cap_mount(p, path, NULL, MS_BIND, NULL) == -1 )
     errExit("mount --bind");
   if( cap_mount(NULL, path, NULL, MS_PRIVATE, NULL) == -1 )
@@ -127,6 +128,7 @@ static void setup_tty() {
 }
 
 static void setup_devpts() {
+  unmount_directory("/dev/pts");
   if( cap_mount("devpts", "/dev/pts", "devpts", 0, "newinstance,gid=5,mode=620,ptmxmode=0666") == -1)
     errExit("mount devpts");
   if( cap_mount("/dev/pts/ptmx", "/dev/ptmx", NULL, MS_BIND, NULL) == -1 )
@@ -137,6 +139,7 @@ int child_main(void *arg) {
   appjail_options *opts = (appjail_options*)arg;
 
   drop_caps();
+  init_libmount();
   /* Set up the private network */
   if(opts->unshare_network)
     if( configure_loopback_interface() != 0 )
