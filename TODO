@@ -4,6 +4,7 @@ urgent:
 * make defaults for --keep and --keep-full configurable
 * add an option to mask directories
 * make missing cap_chown non-fatal, but add a warning
+* more thorough checks to ensure no unprivileged user has the possibility to manipulate appjail.conf
 
 maybe:
 
