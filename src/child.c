@@ -20,6 +20,7 @@
 static void get_x11() {
   char *cmd_argv[8];
   char *display;
+  int fd;
 
   if( mkdir(APPJAIL_SWAPDIR "/X11-unix", 0755) == -1 )
     errExit("mkdir");
@@ -40,6 +41,9 @@ static void get_x11() {
   cmd_argv[5] = "MIT-MAGIC-COOKIE-1";
   cmd_argv[6] = "trusted";
   cmd_argv[7] = NULL;
+  // Create an empty file to silence an xauth error message
+  if( (fd = open(cmd_argv[2], O_CREAT, 0600)) != -1)
+    close(fd);
   if( run_command(cmd_argv[0], cmd_argv) != EXIT_SUCCESS )
     errExit("xauth");
 }
