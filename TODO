@@ -1,10 +1,15 @@
 urgent:
 
 * handle /run: keep, only keep /run/user/$UID, create private /run
+* more thorough checks to ensure no unprivileged user has the possibility to manipulate appjail.conf
+
+soon:
+
+* option to disable coredumps
 * make defaults for --keep and --keep-full configurable
 * add an option to mask directories
 * make missing cap_chown non-fatal, but add a warning
-* more thorough checks to ensure no unprivileged user has the possibility to manipulate appjail.conf
+* make more defaults configurable, i.e. network
 
 maybe:
 
@@ -13,3 +18,4 @@ maybe:
 * (maybe) allow binding a custom {/var,}/tmp
 * handle dbus sockets?
 * add optional seccomp restrictions?
+* bind/copy some configuration files from the host?
