@@ -40,7 +40,7 @@ static void get_x11() {
   cmd_argv[5] = "MIT-MAGIC-COOKIE-1";
   cmd_argv[6] = "trusted";
   cmd_argv[7] = NULL;
-  if( run_command(cmd_argv[0], cmd_argv) != 0 )
+  if( run_command(cmd_argv[0], cmd_argv) != EXIT_SUCCESS )
     errExit("xauth");
 }
 
@@ -62,7 +62,7 @@ static void setup_x11() {
   cmd_argv[1] = APPJAIL_SWAPDIR "/Xauthority";
   cmd_argv[2] = xauthority;
   cmd_argv[3] = NULL;
-  if( run_command(cmd_argv[0], cmd_argv) == -1 )
+  if( run_command(cmd_argv[0], cmd_argv) != EXIT_SUCCESS )
     errExit("mv");
 }
 
