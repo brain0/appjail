@@ -2,6 +2,5 @@
 * allow binding more file systems under /home
 * (maybe) allow binding a custom {/var,}/tmp
 * handle /run: keep, only keep /run/user/$UID, create private /run
-* handle X11 sockets and .Xauthority?
 * handle dbus sockets?
 * add optional seccomp restrictions?
