@@ -51,7 +51,7 @@ static void add_array_entry(char ***array, unsigned int *size, unsigned int *num
   } while(0)
 #define ADD_ARRAY_ENTRY_SHARED(p) add_array_entry(&(opts->shared_directories), &shared_directories_size, &shared_directories_num, remove_trailing_slash(p))
 
-appjail_options *parse_options(int argc, char *argv[]) {
+appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   int opt;
   unsigned int unmount_directories_num,
       unmount_directories_size,
@@ -96,6 +96,8 @@ appjail_options *parse_options(int argc, char *argv[]) {
         exit(EXIT_SUCCESS);
         break;
       case 'p':
+        if(!config->allow_new_privs_permitted)
+          errExitNoErrno("Using the --allow-new-privs option is not permitted.");
         opts->allow_new_privs = true;
         break;
       case 'H':

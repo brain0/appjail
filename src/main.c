@@ -2,6 +2,7 @@
 #include "child.h"
 #include "cap.h"
 #include "opts.h"
+#include "configfile.h"
 
 #include <sys/prctl.h>
 #include <sched.h>
@@ -15,12 +16,18 @@ int main(int argc, char *argv[]) {
   int status;
   int clone_flags;
   appjail_options *opts;
+  appjail_config *config;
 
   /* Drop all privileges we might accidentally have */
   drop_caps();
 
+  /* Parse configuration */
+  config = parse_config();
+  if(config == NULL)
+    exit(EXIT_FAILURE);
   /* Parse command line */
-  opts = parse_options(argc, argv);
+  opts = parse_options(argc, argv, config);
+  free_config(config);
 
   if(!opts->allow_new_privs) {
     /* Ensure we never elevate privileges again */
