@@ -25,11 +25,29 @@ static bool check_permissions() {
   return true;
 }
 
+static bool get_boolean(GKeyFile *cfgfile, const char *group, const char *key, bool *result, bool def) {
+  bool res, ret;
+  GError *err = NULL;
+  ret = false;
+
+  res = g_key_file_get_boolean(cfgfile, group,key, &err);
+  if(err == NULL) {
+    /* use value from configuration file */
+    ret = true;
+    *result = res;
+  }
+  else if(err->code == G_KEY_FILE_ERROR_KEY_NOT_FOUND || err->code == G_KEY_FILE_ERROR_GROUP_NOT_FOUND) {
+    /* default value */
+    ret = true;
+    *result = def;
+  }
+  g_clear_error(&err);
+  return ret;
+}
+
 appjail_config *parse_config() {
   appjail_config *config;
   GKeyFile *cfgfile;
-  gboolean tmpbool;
-  GError *err = NULL;
 
   if(!check_permissions())
     return NULL;
@@ -42,27 +60,12 @@ appjail_config *parse_config() {
   if (!g_key_file_load_from_file(cfgfile, APPJAIL_CONFIGFILE, G_KEY_FILE_NONE, NULL))
     goto parse_error;
 
-  tmpbool = g_key_file_get_boolean(cfgfile,
-                                   GRP_PERMISSIONS,
-                                   KEY_ALLOW_NEW_PRIVS_PRERMITTED,
-                                   &err);
-  if(err == NULL)
-    /* use value from configuration file */
-    config->allow_new_privs_permitted = tmpbool;
-  else {
-    if(err->code == G_KEY_FILE_ERROR_INVALID_VALUE)
-      /* not a boolean value */
-      goto parse_error;
-    if(err->code == G_KEY_FILE_ERROR_KEY_NOT_FOUND || err->code == G_KEY_FILE_ERROR_GROUP_NOT_FOUND)
-      /* default */
-      config->allow_new_privs_permitted = false;
-  }
-  g_clear_error(&err);
+  if(!get_boolean(cfgfile, GRP_PERMISSIONS, KEY_ALLOW_NEW_PRIVS_PRERMITTED, &(config->allow_new_privs_permitted), false))
+    goto parse_error;
 
   g_key_file_free(cfgfile);
   return config;
 parse_error:
-  g_clear_error(&err);
   fprintf(stderr, "Failed to parse configuration file.\n");
   free_config(config);
   g_key_file_free(cfgfile);
