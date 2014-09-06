@@ -4,6 +4,7 @@
 
 typedef struct {
   bool allow_new_privs_permitted;
+  bool default_private_network;
 } appjail_config;
 
 appjail_config *parse_config();

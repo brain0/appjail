@@ -58,16 +58,17 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
       shared_mounts_size;
   appjail_options *opts;
   static struct option long_options[] = {
-    { "help",            no_argument,       0,  'h'  },
-    { "allow-new-privs", no_argument,       0,  'p'  },
-    { "homedir",         required_argument, 0,  'H'  },
-    { "keep-shm",        no_argument,       0,  256  },
-    { "keep",            required_argument, 0,  'K'  },
-    { "keep-full",       required_argument, 0,  257  },
-    { "shared",          required_argument, 0,  'S'  },
-    { "x11",             no_argument,       0,  'X'  },
-    { "private-network", no_argument,       0,  'N'  },
-    { 0,                 0,                 0,  0    }
+    { "help",               no_argument,       0,  'h'  },
+    { "allow-new-privs",    no_argument,       0,  'p'  },
+    { "homedir",            required_argument, 0,  'H'  },
+    { "keep-shm",           no_argument,       0,  256  },
+    { "keep",               required_argument, 0,  'K'  },
+    { "keep-full",          required_argument, 0,  257  },
+    { "shared",             required_argument, 0,  'S'  },
+    { "x11",                no_argument,       0,  'X'  },
+    { "private-network",    no_argument,       0,  'N'  },
+    { "no-private-network", no_argument,       0,  'n'  },
+    { 0,                    0,                 0,  0    }
   };
 
   if((opts = malloc(sizeof(appjail_options))) == NULL)
@@ -78,7 +79,7 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   opts->keep_shm = false;
   opts->homedir = NULL;
   opts->keep_x11 = false;
-  opts->unshare_network = false;
+  opts->unshare_network = config->default_private_network;
   /* initialize directory lists */
   opts->keep_mounts = malloc(NUM_ENTRIES*sizeof(char*));
   keep_mounts_size = NUM_ENTRIES;
@@ -93,7 +94,7 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   shared_mounts_num = 1;
   opts->shared_mounts[0] = NULL;
 
-  while((opt = getopt_long(argc, argv, "+:hpH:K:S:XN", long_options, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, "+:hpH:K:S:XNn", long_options, NULL)) != -1) {
     switch(opt) {
       case 'h':
         usage();
@@ -124,6 +125,9 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
         break;
       case 'N':
         opts->unshare_network = true;
+        break;
+      case 'n':
+        opts->unshare_network = false;
         break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);

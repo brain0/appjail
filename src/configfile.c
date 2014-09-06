@@ -3,7 +3,9 @@
 #include <sys/stat.h>
 
 #define GRP_PERMISSIONS "Permissions"
+#define GRP_DEFAULTS "Defaults"
 #define KEY_ALLOW_NEW_PRIVS_PRERMITTED "PermitAllowNewPrivs"
+#define KEY_PRIVATE_NETWORK "PrivateNetwork"
 
 static bool check_permissions() {
   struct stat st;
@@ -61,6 +63,8 @@ appjail_config *parse_config() {
     goto parse_error;
 
   if(!get_boolean(cfgfile, GRP_PERMISSIONS, KEY_ALLOW_NEW_PRIVS_PRERMITTED, &(config->allow_new_privs_permitted), false))
+    goto parse_error;
+  if(!get_boolean(cfgfile, GRP_DEFAULTS, KEY_PRIVATE_NETWORK, &(config->default_private_network), false))
     goto parse_error;
 
   g_key_file_free(cfgfile);
