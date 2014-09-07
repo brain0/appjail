@@ -135,6 +135,30 @@ static void setup_devpts() {
     errExit("mount --bind");
 }
 
+static void setup_run(run_mode_t mode) {
+  char path[PATH_MAX];
+
+  if(mode != RUN_HOST) {
+    snprintf(path, PATH_MAX-1, "/run/user/%d", getuid());
+    if( mode == RUN_USER ) {
+      if( mkdir("runuser", 0755) == -1 )
+        errExit("mkdir");
+      if( cap_mount(path, "runuser", NULL, MS_BIND | MS_REC, NULL) == -1 )
+        errExit("mount --rbind /run/user/UID runuser");
+    }
+    setup_path("run", "/run", 0755);
+    if( mkdir("/run/user", 0755) == -1 )
+      errExit("mkdir /run/user");
+    if( mkdir(path, 0700) == -1 )
+      errExit("mkdir /run/user/UID");
+    cap_chown("/run", 0, 0);
+    cap_chown("/run/user", 0, 0);
+    if( mode == RUN_USER )
+      if( cap_mount("runuser", path, NULL, MS_MOVE, NULL ) == -1 )
+        errExit("mount --move runuser /run/user/UID");
+  }
+}
+
 int child_main(void *arg) {
   appjail_options *opts = (appjail_options*)arg;
 
@@ -176,7 +200,10 @@ int child_main(void *arg) {
 
   /* set up the tty */
   setup_tty();
-  /* set up home directory using the one we bound earlier */
+  /* set up /run */
+  setup_run(opts->run_mode);
+  /* set up home directory using the one we bound earlier
+   * WARNING: We change the current directory from APPJAIL_SWAPDIR to the home directory */
   setup_home_directory();
   if(opts->keep_x11)
     /* Set up X11 socket directory and xauth data */

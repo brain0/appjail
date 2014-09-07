@@ -21,6 +21,10 @@ static void usage() {
          "  -S, --shared <DIR>      Do not force private mount propagation on submounts of DIR.\n"
          "  -X, --x11               Allow X11 access.\n"
          "  -N, --private-network   Isolate from the host network.\n"
+         "  -R, --run <MODE>        Determine how to handle the /run directory.\n"
+         "                           host:    Keep the host's /run directory\n"
+         "                           user:    Only keep /run/user/UID\n"
+         "                           private: Use a private /run directory\n"
          "\n");
 }
 
@@ -68,6 +72,7 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
     { "x11",                no_argument,       0,  'X'  },
     { "private-network",    no_argument,       0,  'N'  },
     { "no-private-network", no_argument,       0,  'n'  },
+    { "run",                required_argument, 0,  'R'  },
     { 0,                    0,                 0,  0    }
   };
 
@@ -80,6 +85,7 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   opts->homedir = NULL;
   opts->keep_x11 = false;
   opts->unshare_network = config->default_private_network;
+  opts->run_mode = RUN_PRIVATE;
   /* initialize directory lists */
   opts->keep_mounts = malloc(NUM_ENTRIES*sizeof(char*));
   keep_mounts_size = NUM_ENTRIES;
@@ -94,7 +100,7 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   shared_mounts_num = 1;
   opts->shared_mounts[0] = NULL;
 
-  while((opt = getopt_long(argc, argv, "+:hpH:K:S:XNn", long_options, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, "+:hpH:K:S:XNnR:", long_options, NULL)) != -1) {
     switch(opt) {
       case 'h':
         usage();
@@ -128,6 +134,10 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
         break;
       case 'n':
         opts->unshare_network = false;
+        break;
+      case 'R':
+        if(!string_to_run_mode(&(opts->run_mode), optarg))
+          errExitNoErrno("Invalid argument to -R/--run.");
         break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);
@@ -168,4 +178,19 @@ void free_options(appjail_options *opts) {
   free(opts->shared_mounts);
   free(opts->special_mounts);
   free(opts);
+}
+
+bool string_to_run_mode(run_mode_t *result, const char *s) {
+  bool ret = true;
+
+  if(!strcmp(s, "host"))
+    *result = RUN_HOST;
+  else if(!strcmp(s, "user"))
+    *result = RUN_USER;
+  else if(!strcmp(s, "private"))
+    *result = RUN_PRIVATE;
+  else
+    ret = false;
+
+  return ret;
 }

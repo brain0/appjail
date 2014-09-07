@@ -1,4 +1,5 @@
 #include "configfile.h"
+#include "opts.h"
 #include <glib.h>
 #include <sys/stat.h>
 
@@ -6,6 +7,7 @@
 #define GRP_DEFAULTS "Defaults"
 #define KEY_ALLOW_NEW_PRIVS_PRERMITTED "PermitAllowNewPrivs"
 #define KEY_PRIVATE_NETWORK "PrivateNetwork"
+#define KEY_RUN_MODE "Run"
 
 static bool check_permissions() {
   struct stat st;
@@ -47,6 +49,24 @@ static bool get_boolean(GKeyFile *cfgfile, const char *group, const char *key, b
   return ret;
 }
 
+static bool get_run_mode(GKeyFile *cfgfile, const char *group, const char *key, run_mode_t *result, run_mode_t def) {
+  bool ret = false;
+  GError *err = NULL;
+  char *s;
+
+  s = g_key_file_get_string(cfgfile, group, key, &err);
+  if(err == NULL)
+    /* use value from configuration file */
+    ret = string_to_run_mode(result, s);
+  else if(err->code == G_KEY_FILE_ERROR_KEY_NOT_FOUND || err->code == G_KEY_FILE_ERROR_GROUP_NOT_FOUND) {
+    /* default value */
+    ret = true;
+    *result = def;
+  }
+  g_clear_error(&err);
+  return ret;
+}
+
 appjail_config *parse_config() {
   appjail_config *config;
   GKeyFile *cfgfile;
@@ -65,6 +85,8 @@ appjail_config *parse_config() {
   if(!get_boolean(cfgfile, GRP_PERMISSIONS, KEY_ALLOW_NEW_PRIVS_PRERMITTED, &(config->allow_new_privs_permitted), false))
     goto parse_error;
   if(!get_boolean(cfgfile, GRP_DEFAULTS, KEY_PRIVATE_NETWORK, &(config->default_private_network), false))
+    goto parse_error;
+  if(!get_run_mode(cfgfile, GRP_DEFAULTS, KEY_RUN_MODE, &(config->default_run_mode), RUN_PRIVATE))
     goto parse_error;
 
   g_key_file_free(cfgfile);

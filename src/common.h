@@ -8,6 +8,8 @@
 
 typedef enum { false, true } bool;
 
+typedef enum { RUN_HOST, RUN_USER, RUN_PRIVATE } run_mode_t;
+
 #define errExit(msg) do { \
   perror(msg);\
   exit(EXIT_FAILURE);\

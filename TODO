@@ -1,10 +1,10 @@
 urgent:
 
-* handle /run: keep, only keep /run/user/$UID, create private /run
 * more thorough checks to ensure no unprivileged user has the possibility to manipulate appjail.conf
 
 soon:
 
+* allow keepimg /run/media/USER/ in -R private and -R user modes
 * option to disable coredumps
 * make defaults for --keep and --keep-full configurable
 * add an option to mask directories

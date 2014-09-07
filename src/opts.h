@@ -8,6 +8,7 @@ typedef struct {
   bool allow_new_privs;
   bool keep_shm;
   const char *homedir;
+  run_mode_t run_mode;
 
   char **argv;
 
@@ -20,3 +21,5 @@ typedef struct {
 
 appjail_options *parse_options(int argc, char *argv[], appjail_config *config);
 void free_options(appjail_options *opts);
+
+bool string_to_run_mode(run_mode_t *result, const char *s);
