@@ -4,6 +4,8 @@
 #include "configfile.h"
 
 typedef struct {
+  uid_t uid;
+  char *user;
 
   bool allow_new_privs;
   bool keep_shm;

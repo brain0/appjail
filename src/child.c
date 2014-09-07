@@ -135,11 +135,11 @@ static void setup_devpts() {
     errExit("mount --bind");
 }
 
-static void setup_run(run_mode_t mode) {
+static void setup_run(run_mode_t mode, uid_t uid) {
   char path[PATH_MAX];
 
   if(mode != RUN_HOST) {
-    snprintf(path, PATH_MAX-1, "/run/user/%d", getuid());
+    snprintf(path, PATH_MAX-1, "/run/user/%d", uid);
     if( mode == RUN_USER ) {
       if( mkdir("runuser", 0755) == -1 )
         errExit("mkdir");
@@ -201,10 +201,10 @@ int child_main(void *arg) {
   /* set up the tty */
   setup_tty();
   /* set up /run */
-  setup_run(opts->run_mode);
+  setup_run(opts->run_mode, opts->uid);
   /* set up home directory using the one we bound earlier
    * WARNING: We change the current directory from APPJAIL_SWAPDIR to the home directory */
-  setup_home_directory();
+  setup_home_directory(opts->user);
   if(opts->keep_x11)
     /* Set up X11 socket directory and xauth data */
     setup_x11();

@@ -2,6 +2,9 @@
 #include "opts.h"
 #include <getopt.h>
 #include <string.h>
+#include <pwd.h>
+#include <errno.h>
+#include <unistd.h>
 
 #define NUM_ENTRIES 10
 
@@ -61,6 +64,7 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
       shared_mounts_num,
       shared_mounts_size;
   appjail_options *opts;
+  struct passwd *pw;
   static struct option long_options[] = {
     { "help",               no_argument,       0,  'h'  },
     { "allow-new-privs",    no_argument,       0,  'p'  },
@@ -79,6 +83,12 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   if((opts = malloc(sizeof(appjail_options))) == NULL)
     errExit("malloc");
 
+  /* special options */
+  opts->uid = getuid();
+  errno = 0;
+  if((pw = getpwuid(opts->uid)) == NULL)
+    errExit("getpwuid");
+  opts->user = strdup(pw->pw_name);
   /* defaults */
   opts->allow_new_privs = false;
   opts->keep_shm = false;
@@ -177,6 +187,7 @@ void free_options(appjail_options *opts) {
   free(opts->keep_mounts_full);
   free(opts->shared_mounts);
   free(opts->special_mounts);
+  free(opts->user);
   free(opts);
 }
 

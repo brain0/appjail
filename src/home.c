@@ -4,11 +4,9 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <pwd.h>
 #include <limits.h>
 #include <unistd.h>
 #include <sys/mount.h>
-#include <errno.h>
 
 void get_home_directory(const char *homedir) {
   struct stat st;
@@ -27,15 +25,11 @@ void get_home_directory(const char *homedir) {
     errExit("mount --bind");
 }
 
-void setup_home_directory() {
-  struct passwd *pw;
+void setup_home_directory(const char *user) {
   char dir[PATH_MAX];
   struct stat st;
 
-  errno = 0;
-  if((pw = getpwuid(getuid())) == NULL)
-    errExit("getpwuid");
-  snprintf(dir, PATH_MAX-1, "/home/%s", pw->pw_name);
+  snprintf(dir, PATH_MAX-1, "/home/%s", user);
   if(mkdir(dir, 0755) == -1)
     errExit("mkdir");
   if(setenv("HOME", dir, 1) == -1)
