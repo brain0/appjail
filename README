@@ -21,3 +21,13 @@ Then, as root, run
  # setcap cap_sys_admin,cap_chown,cap_net_admin=p /usr/local/bin/appjail
 If you don't need the -N option, run instead
  # setcap cap_sys_admin,cap_chown=p /usr/local/bin/appjail
+
+Usage examples:
+
+* Run skype. Create ~/jailhomes/skype and execute
+   $ appjail -X -H ~/jailhomes/skype -R user --keep-ipc-namespace skype
+
+* Run steam. Create ~/jaihomes/steam and execute
+   $ appjail -X -H ~/jailhomes/steam -R host --keep-ipc-namespace steam
+  Note that steam crashes without -R host. It works without --keep-ipc-namespace,
+  but you lose hardware accelerated GUI rendering and video decoding.
