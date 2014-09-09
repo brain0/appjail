@@ -43,9 +43,11 @@ int main(int argc, char *argv[]) {
 
   /* Clone a child in an isolated namespace */
   need_cap(CAP_SYS_ADMIN);
-  clone_flags = CLONE_NEWIPC | CLONE_NEWNS | CLONE_NEWPID | SIGCHLD;
+  clone_flags = CLONE_NEWNS | CLONE_NEWPID | SIGCHLD;
   if(opts->unshare_network)
     clone_flags |= CLONE_NEWNET;
+  if(!opts->keep_ipc_namespace)
+    clone_flags |= CLONE_NEWIPC;
   pid1 = clone(child_main, stackTop, clone_flags, (void*)opts);
   /* We drop all capabilities from the permitted capability set */
   drop_caps_forever();

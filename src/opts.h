@@ -9,6 +9,7 @@ typedef struct {
 
   bool allow_new_privs;
   bool keep_shm;
+  bool keep_ipc_namespace;
   const char *homedir;
   run_mode_t run_mode;
   bool bind_run_media;

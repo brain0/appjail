@@ -17,6 +17,8 @@ static void usage() {
          "  -h, --help              Print command help and exit.\n"
          "  -p, --allow-new-privs   Don't prevent setuid binaries from raising privileges.\n"
          "  --keep-shm              Keep the host's /dev/shm directory.\n"
+         "  --keep-ipc-namespace    Stay in the host's IPC namespace. This is necessary for\n"
+         "                          qt aplications to function.\n"
          "  -H, --homedir <DIR>     Use DIR as home directory instead of a temporary one.\n"
          "  -K, --keep <DIR>        Do not Unmount DIR inside the jail.\n"
          "                          This option also affects all mounts that are parents of DIR.\n"
@@ -61,6 +63,7 @@ static void add_array_entry(char ***array, unsigned int *size, unsigned int *num
 #define OPT_KEEP_FULL 257
 #define OPT_RUN_MEDIA 258
 #define OPT_NO_RUN_MEDIA 259
+#define OPT_KEEP_IPC_NAMESPACE 260
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config) {
   int opt;
@@ -73,20 +76,21 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   appjail_options *opts;
   struct passwd *pw;
   static struct option long_options[] = {
-    { "help",               no_argument,       0,  'h'              },
-    { "allow-new-privs",    no_argument,       0,  'p'              },
-    { "homedir",            required_argument, 0,  'H'              },
-    { "keep-shm",           no_argument,       0,  OPT_KEEP_SHM     },
-    { "keep",               required_argument, 0,  'K'              },
-    { "keep-full",          required_argument, 0,  OPT_KEEP_FULL    },
-    { "shared",             required_argument, 0,  'S'              },
-    { "x11",                no_argument,       0,  'X'              },
-    { "private-network",    no_argument,       0,  'N'              },
-    { "no-private-network", no_argument,       0,  'n'              },
-    { "run",                required_argument, 0,  'R'              },
-    { "run-media",          no_argument,       0,  OPT_RUN_MEDIA    },
-    { "no-run-media",       no_argument,       0,  OPT_NO_RUN_MEDIA },
-    { 0,                    0,                 0,  0                }
+    { "help",               no_argument,       0,  'h'                    },
+    { "allow-new-privs",    no_argument,       0,  'p'                    },
+    { "homedir",            required_argument, 0,  'H'                    },
+    { "keep-shm",           no_argument,       0,  OPT_KEEP_SHM           },
+    { "keep-ipc-namespace", no_argument,       0,  OPT_KEEP_IPC_NAMESPACE },
+    { "keep",               required_argument, 0,  'K'                    },
+    { "keep-full",          required_argument, 0,  OPT_KEEP_FULL          },
+    { "shared",             required_argument, 0,  'S'                    },
+    { "x11",                no_argument,       0,  'X'                    },
+    { "private-network",    no_argument,       0,  'N'                    },
+    { "no-private-network", no_argument,       0,  'n'                    },
+    { "run",                required_argument, 0,  'R'                    },
+    { "run-media",          no_argument,       0,  OPT_RUN_MEDIA          },
+    { "no-run-media",       no_argument,       0,  OPT_NO_RUN_MEDIA       },
+    { 0,                    0,                 0,  0                      }
   };
 
   if((opts = malloc(sizeof(appjail_options))) == NULL)
@@ -101,6 +105,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   /* defaults */
   opts->allow_new_privs = false;
   opts->keep_shm = false;
+  opts->keep_ipc_namespace = false;
   opts->homedir = NULL;
   opts->keep_x11 = false;
   opts->unshare_network = config->default_private_network;
@@ -136,6 +141,9 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
         break;
       case OPT_KEEP_SHM:
         opts->keep_shm = true;
+        break;
+      case OPT_KEEP_IPC_NAMESPACE:
+        opts->keep_ipc_namespace = true;
         break;
       case 'K':
         ADD_ARRAY_ENTRY_KEEP(optarg);
