@@ -95,7 +95,7 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   opts->homedir = NULL;
   opts->keep_x11 = false;
   opts->unshare_network = config->default_private_network;
-  opts->run_mode = RUN_PRIVATE;
+  opts->run_mode = config->default_run_mode;
   /* initialize directory lists */
   opts->keep_mounts = malloc(NUM_ENTRIES*sizeof(char*));
   keep_mounts_size = NUM_ENTRIES;
