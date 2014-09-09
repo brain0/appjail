@@ -22,7 +22,7 @@ typedef struct {
   bool unshare_network;
 } appjail_options;
 
-appjail_options *parse_options(int argc, char *argv[], appjail_config *config);
+appjail_options *parse_options(int argc, char *argv[], const appjail_config *config);
 void free_options(appjail_options *opts);
 
 bool string_to_run_mode(run_mode_t *result, const char *s);

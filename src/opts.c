@@ -62,7 +62,7 @@ static void add_array_entry(char ***array, unsigned int *size, unsigned int *num
 #define OPT_RUN_MEDIA 258
 #define OPT_NO_RUN_MEDIA 259
 
-appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
+appjail_options *parse_options(int argc, char *argv[], const appjail_config *config) {
   int opt;
   unsigned int keep_mounts_num,
       keep_mounts_size,
