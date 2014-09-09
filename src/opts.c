@@ -28,6 +28,8 @@ static void usage() {
          "                           host:    Keep the host's /run directory\n"
          "                           user:    Only keep /run/user/UID\n"
          "                           private: Use a private /run directory\n"
+         "  --(no-)run-media        Determine whether /run/media/USER will be available in the jail.\n"
+         "                          This option has no effect with --run=host.\n"
          "\n");
 }
 
@@ -57,6 +59,8 @@ static void add_array_entry(char ***array, unsigned int *size, unsigned int *num
 
 #define OPT_KEEP_SHM 256
 #define OPT_KEEP_FULL 257
+#define OPT_RUN_MEDIA 258
+#define OPT_NO_RUN_MEDIA 259
 
 appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   int opt;
@@ -69,18 +73,20 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   appjail_options *opts;
   struct passwd *pw;
   static struct option long_options[] = {
-    { "help",               no_argument,       0,  'h'           },
-    { "allow-new-privs",    no_argument,       0,  'p'           },
-    { "homedir",            required_argument, 0,  'H'           },
-    { "keep-shm",           no_argument,       0,  OPT_KEEP_SHM  },
-    { "keep",               required_argument, 0,  'K'           },
-    { "keep-full",          required_argument, 0,  OPT_KEEP_FULL },
-    { "shared",             required_argument, 0,  'S'           },
-    { "x11",                no_argument,       0,  'X'           },
-    { "private-network",    no_argument,       0,  'N'           },
-    { "no-private-network", no_argument,       0,  'n'           },
-    { "run",                required_argument, 0,  'R'           },
-    { 0,                    0,                 0,  0             }
+    { "help",               no_argument,       0,  'h'              },
+    { "allow-new-privs",    no_argument,       0,  'p'              },
+    { "homedir",            required_argument, 0,  'H'              },
+    { "keep-shm",           no_argument,       0,  OPT_KEEP_SHM     },
+    { "keep",               required_argument, 0,  'K'              },
+    { "keep-full",          required_argument, 0,  OPT_KEEP_FULL    },
+    { "shared",             required_argument, 0,  'S'              },
+    { "x11",                no_argument,       0,  'X'              },
+    { "private-network",    no_argument,       0,  'N'              },
+    { "no-private-network", no_argument,       0,  'n'              },
+    { "run",                required_argument, 0,  'R'              },
+    { "run-media",          no_argument,       0,  OPT_RUN_MEDIA    },
+    { "no-run-media",       no_argument,       0,  OPT_NO_RUN_MEDIA },
+    { 0,                    0,                 0,  0                }
   };
 
   if((opts = malloc(sizeof(appjail_options))) == NULL)
@@ -99,6 +105,7 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   opts->keep_x11 = false;
   opts->unshare_network = config->default_private_network;
   opts->run_mode = config->default_run_mode;
+  opts->bind_run_media = config->default_bind_run_media;
   /* initialize directory lists */
   opts->keep_mounts = malloc(NUM_ENTRIES*sizeof(char*));
   keep_mounts_size = NUM_ENTRIES;
@@ -151,6 +158,12 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
       case 'R':
         if(!string_to_run_mode(&(opts->run_mode), optarg))
           errExitNoErrno("Invalid argument to -R/--run.");
+        break;
+      case OPT_RUN_MEDIA:
+        opts->bind_run_media = true;
+        break;
+      case OPT_NO_RUN_MEDIA:
+        opts->bind_run_media = false;
         break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);

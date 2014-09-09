@@ -8,6 +8,7 @@
 #define KEY_ALLOW_NEW_PRIVS_PRERMITTED "PermitAllowNewPrivs"
 #define KEY_PRIVATE_NETWORK "PrivateNetwork"
 #define KEY_RUN_MODE "Run"
+#define KEY_RUN_MEDIA "RunMedia"
 
 static bool check_permissions() {
   struct stat st;
@@ -87,6 +88,8 @@ appjail_config *parse_config() {
   if(!get_boolean(cfgfile, GRP_DEFAULTS, KEY_PRIVATE_NETWORK, &(config->default_private_network), false))
     goto parse_error;
   if(!get_run_mode(cfgfile, GRP_DEFAULTS, KEY_RUN_MODE, &(config->default_run_mode), RUN_PRIVATE))
+    goto parse_error;
+  if(!get_boolean(cfgfile, GRP_DEFAULTS, KEY_RUN_MEDIA, &(config->default_bind_run_media), false))
     goto parse_error;
 
   g_key_file_free(cfgfile);
