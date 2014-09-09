@@ -55,6 +55,9 @@ static void add_array_entry(char ***array, unsigned int *size, unsigned int *num
 #define ADD_ARRAY_ENTRY_KEEP_FULL(p) add_array_entry(&(opts->keep_mounts_full), &keep_mounts_full_size, &keep_mounts_full_num, remove_trailing_slash(p))
 #define ADD_ARRAY_ENTRY_SHARED(p) add_array_entry(&(opts->shared_mounts), &shared_mounts_size, &shared_mounts_num, remove_trailing_slash(p))
 
+#define OPT_KEEP_SHM 256
+#define OPT_KEEP_FULL 257
+
 appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   int opt;
   unsigned int keep_mounts_num,
@@ -66,18 +69,18 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
   appjail_options *opts;
   struct passwd *pw;
   static struct option long_options[] = {
-    { "help",               no_argument,       0,  'h'  },
-    { "allow-new-privs",    no_argument,       0,  'p'  },
-    { "homedir",            required_argument, 0,  'H'  },
-    { "keep-shm",           no_argument,       0,  256  },
-    { "keep",               required_argument, 0,  'K'  },
-    { "keep-full",          required_argument, 0,  257  },
-    { "shared",             required_argument, 0,  'S'  },
-    { "x11",                no_argument,       0,  'X'  },
-    { "private-network",    no_argument,       0,  'N'  },
-    { "no-private-network", no_argument,       0,  'n'  },
-    { "run",                required_argument, 0,  'R'  },
-    { 0,                    0,                 0,  0    }
+    { "help",               no_argument,       0,  'h'           },
+    { "allow-new-privs",    no_argument,       0,  'p'           },
+    { "homedir",            required_argument, 0,  'H'           },
+    { "keep-shm",           no_argument,       0,  OPT_KEEP_SHM  },
+    { "keep",               required_argument, 0,  'K'           },
+    { "keep-full",          required_argument, 0,  OPT_KEEP_FULL },
+    { "shared",             required_argument, 0,  'S'           },
+    { "x11",                no_argument,       0,  'X'           },
+    { "private-network",    no_argument,       0,  'N'           },
+    { "no-private-network", no_argument,       0,  'n'           },
+    { "run",                required_argument, 0,  'R'           },
+    { 0,                    0,                 0,  0             }
   };
 
   if((opts = malloc(sizeof(appjail_options))) == NULL)
@@ -124,13 +127,13 @@ appjail_options *parse_options(int argc, char *argv[], appjail_config *config) {
       case 'H':
         opts->homedir = optarg;
         break;
-      case 256:
+      case OPT_KEEP_SHM:
         opts->keep_shm = true;
         break;
       case 'K':
         ADD_ARRAY_ENTRY_KEEP(optarg);
         break;
-      case 257:
+      case OPT_KEEP_FULL:
         ADD_ARRAY_ENTRY_KEEP_FULL(optarg);
         break;
       case 'S':
