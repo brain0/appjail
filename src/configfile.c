@@ -2,6 +2,9 @@
 #include "opts.h"
 #include <glib.h>
 #include <sys/stat.h>
+#include <libgen.h>
+#include <stdio.h>
+#include <string.h>
 
 #define GRP_PERMISSIONS "Permissions"
 #define GRP_DEFAULTS "Defaults"
@@ -10,8 +13,31 @@
 #define KEY_RUN_MODE "Run"
 #define KEY_RUN_MEDIA "RunMedia"
 
+static bool check_directory_permissions(char *path) {
+  struct stat st;
+
+  if(stat(path, &st) != 0) {
+    fprintf(stderr, "Cannot stat %s.\n", path);
+    return false;
+  }
+  if(st.st_uid != 0) {
+    fprintf(stderr, "Directory %s is not owned by root.\n", path);
+    return false;
+  }
+  if(st.st_mode & (S_IWGRP | S_IWOTH)) {
+    fprintf(stderr, "Directory %s must only be writable by root.\n", path);
+    return false;
+  }
+  if(!strcmp(path, "/"))
+    return true;
+  dirname(path);
+  return check_directory_permissions(path);
+}
+
 static bool check_permissions() {
   struct stat st;
+  bool result;
+  char *path;
 
   /* Check if the configuration file exists, is owned by root and only writable by root */
   if(stat(APPJAIL_CONFIGFILE, &st) != 0) {
@@ -27,7 +53,11 @@ static bool check_permissions() {
     return false;
   }
 
-  return true;
+  path = strdup(APPJAIL_CONFIGFILE);
+  dirname(path);
+  result = check_directory_permissions(path);
+  free(path);
+  return result;
 }
 
 static bool get_boolean(GKeyFile *cfgfile, const char *group, const char *key, bool *result, bool def) {

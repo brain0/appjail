@@ -1,7 +1,3 @@
-urgent:
-
-* more thorough checks to ensure no unprivileged user has the possibility to manipulate appjail.conf
-
 soon:
 
 * option to disable coredumps
