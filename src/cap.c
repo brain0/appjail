@@ -60,11 +60,21 @@ int cap_umount2(const char *target, int flags) {
 }
 
 int cap_chown(const char *path, uid_t owner, gid_t group) {
+  static bool warned = false;
   int r;
 
-  need_cap(CAP_CHOWN);
-  r = chown(path, owner, group);
-  drop_caps();
+  if(want_cap(CAP_CHOWN)) {
+    r = chown(path, owner, group);
+    drop_caps();
+  }
+  else {
+    r = -1;
+    if(!warned) {
+      fprintf(stderr, "The process is missing CAP_CHOWN capability.\n"
+                      "Some directories will be owned by the user although they should be owned by root.\n");
+      warned = true;
+    }
+  }
 
   return r;
 }

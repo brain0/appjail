@@ -3,7 +3,6 @@ soon:
 * option to disable coredumps
 * make defaults for --keep and --keep-full configurable
 * add an option to mask directories
-* make missing cap_chown non-fatal, but add a warning
 
 maybe:
 
