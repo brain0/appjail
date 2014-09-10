@@ -18,7 +18,7 @@ static void usage() {
          "  -p, --allow-new-privs   Don't prevent setuid binaries from raising privileges.\n"
          "  --keep-shm              Keep the host's /dev/shm directory.\n"
          "  --keep-ipc-namespace    Stay in the host's IPC namespace. This is necessary for\n"
-         "                          qt aplications to function.\n"
+         "                          Xorg's MIT-SHM extension.\n"
          "  -H, --homedir <DIR>     Use DIR as home directory instead of a temporary one.\n"
          "  -K, --keep <DIR>        Do not Unmount DIR inside the jail.\n"
          "                          This option also affects all mounts that are parents of DIR.\n"
