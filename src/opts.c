@@ -8,6 +8,13 @@
 
 #define NUM_ENTRIES 10
 
+static void version() {
+  printf("appjail " APPJAIL_VERSION " by Thomas Bächler <thomas@archlinux.org>\n"
+         "Available at https://github.com/brain0/appjail\n"
+         "Licensed under the conditions of the WTFPL (http://www.wtfpl.net/)\n"
+         "\n");
+}
+
 static void usage() {
   printf("Usage: appjail [OPTIONS] [COMMAND]\n"
          "\n"
@@ -76,6 +83,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   appjail_options *opts;
   struct passwd *pw;
   static struct option long_options[] = {
+    { "version",            no_argument,       0,  'V'                    },
     { "help",               no_argument,       0,  'h'                    },
     { "allow-new-privs",    no_argument,       0,  'p'                    },
     { "homedir",            required_argument, 0,  'H'                    },
@@ -125,9 +133,14 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   shared_mounts_num = 1;
   opts->shared_mounts[0] = NULL;
 
-  while((opt = getopt_long(argc, argv, "+:hpH:K:S:XNnR:", long_options, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, "+:hVpH:K:S:XNnR:", long_options, NULL)) != -1) {
     switch(opt) {
+      case 'V':
+        version();
+        exit(EXIT_SUCCESS);
+        break;
       case 'h':
+        version();
         usage();
         exit(EXIT_SUCCESS);
         break;

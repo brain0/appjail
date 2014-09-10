@@ -1,3 +1,4 @@
+export APPJAIL_VERSION := $(shell git describe --always)
 SUBDIRS = src
 
 install-data-local:
