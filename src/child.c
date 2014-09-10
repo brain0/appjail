@@ -168,7 +168,7 @@ int child_main(void *arg) {
 
   /* Bind directories and files that may disappear */
   get_home_directory(opts->homedir);
-  get_tty();
+  get_tty(opts);
   if(opts->keep_x11)
     /* Get X11 socket directory and xauth data */
     get_x11();
@@ -185,7 +185,7 @@ int child_main(void *arg) {
   setup_devpts();
 
   /* set up the tty */
-  setup_tty();
+  setup_tty(opts);
   /* set up /run */
   setup_run(opts);
   /* set up home directory using the one we bound earlier

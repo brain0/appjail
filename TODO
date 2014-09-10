@@ -1,7 +1,6 @@
 urgent:
 
 * more thorough checks to ensure no unprivileged user has the possibility to manipulate appjail.conf
-* if not running on a tty, don't perform any tty setup
 
 soon:
 

@@ -21,6 +21,9 @@ typedef struct {
   char **special_mounts;
   bool keep_x11;
   bool unshare_network;
+
+  /* Internal options */
+  bool setup_tty;
 } appjail_options;
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config);
