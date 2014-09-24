@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
   free_options(opts);
   free(stack);
 
-  /* Wait for child the child to terminate */
+  /* Wait for the child to terminate */
   if(waitpid(pid1, &status, 0) == -1)
     errExit("waitpid");
 

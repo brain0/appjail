@@ -105,7 +105,7 @@ int child_main(void *arg) {
    * private now, we would lose the ability to keep anything as slave.
    */
   set_mount_propagation_slave();
-  /* Mount tmpfs to contain our private data to APPJAIL_SWAPDIR*/
+  /* Mount tmpfs to contain our private data to APPJAIL_SWAPDIR */
   if( cap_mount("appjail", APPJAIL_SWAPDIR, "tmpfs", MS_NODEV | MS_NOSUID, "") == -1 )
     errExit("mount -t tmpfs appjail " APPJAIL_SWAPDIR);
   /* Change into the temporary directory */
