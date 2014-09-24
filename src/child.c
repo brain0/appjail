@@ -117,7 +117,7 @@ int child_main(void *arg) {
   get_tty(opts);
   if(opts->keep_x11)
     /* Get X11 socket directory and xauth data */
-    get_x11();
+    get_x11(opts);
 
   /* clean up the mounts, making almost everything private */
   sanitize_mounts(opts);

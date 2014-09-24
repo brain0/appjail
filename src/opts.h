@@ -20,6 +20,8 @@ typedef struct {
   char **shared_mounts;
   char **special_mounts;
   bool keep_x11;
+  bool x11_trusted;
+  unsigned int x11_timeout;
   bool unshare_network;
 
   /* Internal options */

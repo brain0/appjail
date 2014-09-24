@@ -5,6 +5,8 @@
 #include <pwd.h>
 #include <errno.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <limits.h>
 
 #define NUM_ENTRIES 10
 
@@ -32,6 +34,8 @@ static void usage() {
          "  --keep-full <DIR>       Like --keep, but also affects all submounts of DIR.\n"
          "  -S, --shared <DIR>      Do not force private mount propagation on submounts of DIR.\n"
          "  -X, --x11               Allow X11 access.\n"
+         "  --x11-trusted           Generate a trusted X11 cookie (an untrusted cookie is used by default).\n"
+         "  --x11-timeout <N>       If no X11 client is connected for N seconds, the cookie is revoked.\n"
          "  -N, --private-network   Isolate from the host network.\n"
          "  -R, --run <MODE>        Determine how to handle the /run directory.\n"
          "                           host:    Keep the host's /run directory\n"
@@ -62,6 +66,8 @@ static void add_array_entry(char ***array, unsigned int *size, unsigned int *num
   (*array)[(*num)++] = NULL;
 }
 
+bool string_to_integer(unsigned int *val, const char *str);
+
 #define ADD_ARRAY_ENTRY_KEEP(p) add_array_entry(&(opts->keep_mounts), &keep_mounts_size, &keep_mounts_num, remove_trailing_slash(p))
 #define ADD_ARRAY_ENTRY_KEEP_FULL(p) add_array_entry(&(opts->keep_mounts_full), &keep_mounts_full_size, &keep_mounts_full_num, remove_trailing_slash(p))
 #define ADD_ARRAY_ENTRY_SHARED(p) add_array_entry(&(opts->shared_mounts), &shared_mounts_size, &shared_mounts_num, remove_trailing_slash(p))
@@ -71,6 +77,8 @@ static void add_array_entry(char ***array, unsigned int *size, unsigned int *num
 #define OPT_RUN_MEDIA 258
 #define OPT_NO_RUN_MEDIA 259
 #define OPT_KEEP_IPC_NAMESPACE 260
+#define OPT_X11_TRUSTED 261
+#define OPT_X11_TIMEOUT 262
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config) {
   int opt;
@@ -93,6 +101,8 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
     { "keep-full",          required_argument, 0,  OPT_KEEP_FULL          },
     { "shared",             required_argument, 0,  'S'                    },
     { "x11",                no_argument,       0,  'X'                    },
+    { "x11-trusted",        no_argument,       0,  OPT_X11_TRUSTED        },
+    { "x11-timeout",        required_argument, 0,  OPT_X11_TIMEOUT        },
     { "private-network",    no_argument,       0,  'N'                    },
     { "no-private-network", no_argument,       0,  'n'                    },
     { "run",                required_argument, 0,  'R'                    },
@@ -116,6 +126,8 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   opts->keep_ipc_namespace = false;
   opts->homedir = NULL;
   opts->keep_x11 = false;
+  opts->x11_trusted = false;
+  opts->x11_timeout = 60;
   opts->unshare_network = config->default_private_network;
   opts->run_mode = config->default_run_mode;
   opts->bind_run_media = config->default_bind_run_media;
@@ -169,6 +181,13 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
         break;
       case 'X':
         opts->keep_x11 = true;
+        break;
+      case OPT_X11_TRUSTED:
+        opts->x11_trusted = true;
+        break;
+      case OPT_X11_TIMEOUT:
+        if(!string_to_integer(&(opts->x11_timeout), optarg))
+          errExitNoErrno("Invalid argument to --x11-timeout.");
         break;
       case 'N':
         opts->unshare_network = true;
@@ -241,4 +260,19 @@ bool string_to_run_mode(run_mode_t *result, const char *s) {
     ret = false;
 
   return ret;
+}
+
+bool string_to_integer(unsigned int *val, const char *str) {
+  unsigned long int res;
+  char *err;
+
+  if( strlen(str) == 0 )
+    return false;
+  res = strtoul(str, &err, 10);
+  if( err != NULL && *err != '\0' )
+    return false;
+  if( res > UINT_MAX )
+    return false;
+  *val = res;
+  return true;
 }
