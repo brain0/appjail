@@ -1,6 +1,7 @@
 #include "common.h"
 #include "cap.h"
 #include "child.h"
+#include "devpts.h"
 #include "opts.h"
 #include "home.h"
 #include "mounts.h"
@@ -16,14 +17,6 @@
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>
-
-static void setup_devpts() {
-  unmount_directory("/dev/pts");
-  if( cap_mount("devpts", "/dev/pts", "devpts", 0, "newinstance,gid=5,mode=620,ptmxmode=0666") == -1)
-    errExit("mount devpts");
-  if( cap_mount("/dev/pts/ptmx", "/dev/ptmx", NULL, MS_BIND, NULL) == -1 )
-    errExit("mount --bind");
-}
 
 static void setup_run(const appjail_options *opts) {
   char path[PATH_MAX], mediapath[PATH_MAX];
