@@ -1,17 +1,15 @@
 #include "common.h"
 #include "child.h"
 #include "cap.h"
-#include "opts.h"
+#include "clone.h"
 #include "configfile.h"
+#include "opts.h"
 
 #include <sys/prctl.h>
 #include <sched.h>
 #include <sys/wait.h>
 
-#define STACK_SIZE (1024 * 1024)
-
 int main(int argc, char *argv[]) {
-  char *stack, *stackTop;
   pid_t pid1;
   int status;
   int clone_flags;
@@ -35,22 +33,13 @@ int main(int argc, char *argv[]) {
       errExit("prctl");
   }
 
-  /* Allocate stack for child */
-  stack = malloc(STACK_SIZE);
-  if (stack == NULL)
-    errExit("malloc");
-  stackTop = stack + STACK_SIZE;  /* Assume stack grows downward */
-
   /* Clone a child in an isolated namespace */
-  need_cap(CAP_SYS_ADMIN);
   clone_flags = CLONE_NEWNS | CLONE_NEWPID | SIGCHLD;
   if(opts->unshare_network)
     clone_flags |= CLONE_NEWNET;
   if(!opts->keep_ipc_namespace)
     clone_flags |= CLONE_NEWIPC;
-  pid1 = clone(child_main, stackTop, clone_flags, (void*)opts);
-  /* We drop all capabilities from the permitted capability set */
-  drop_caps_forever();
+  pid1 = my_clone(clone_flags, child_main, (void*)opts);
 
   /* clone failed, we are done */
   if (pid1 == -1)
@@ -58,7 +47,6 @@ int main(int argc, char *argv[]) {
 
   /* Free some memory */
   free_options(opts);
-  free(stack);
 
   /* Wait for the child to terminate */
   if(waitpid(pid1, &status, 0) == -1)

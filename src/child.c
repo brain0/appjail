@@ -16,7 +16,6 @@
 int child_main(void *arg) {
   appjail_options *opts = (appjail_options*)arg;
 
-  drop_caps();
   init_libmount();
   /* Set up the private network */
   if(opts->unshare_network)
