@@ -31,5 +31,5 @@ Usage examples:
 
 * Run steam. Create ~/jaihomes/steam and execute
    $ appjail -X --x11-trusted -H ~/jailhomes/steam -R user --system-bus --keep-ipc-namespace --keep-shm steam
-  Note that steam crashes without -R host. It works without --keep-ipc-namespace,
+  Note that steam crashes without --system-bus. It works without --keep-ipc-namespace,
   but you lose hardware accelerated GUI rendering and video decoding.
