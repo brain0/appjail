@@ -25,11 +25,11 @@ If you don't need the -N option, run instead
 Usage examples:
 
 * Run skype. Create ~/jailhomes/skype and execute
-   $ appjail -X -H ~/jailhomes/skype -R user --keep-ipc-namespace --keep-shm skype
+   $ appjail -X --x11-trusted -H ~/jailhomes/skype -R user --keep-ipc-namespace --keep-shm skype
   Qt applications like skype needs --keep-ipc-namespace to communicate with the X
   server via the MIT-SHM extension. Pulseaudio requires --keep-shm to function.
 
 * Run steam. Create ~/jaihomes/steam and execute
-   $ appjail -X -H ~/jailhomes/steam -R host --keep-ipc-namespace --keep-shm steam
+   $ appjail -X --x11-trusted -H ~/jailhomes/steam -R user --system-bus --keep-ipc-namespace --keep-shm steam
   Note that steam crashes without -R host. It works without --keep-ipc-namespace,
   but you lose hardware accelerated GUI rendering and video decoding.
