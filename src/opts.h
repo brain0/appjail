@@ -13,6 +13,7 @@ typedef struct {
   const char *homedir;
   run_mode_t run_mode;
   bool bind_run_media;
+  bool keep_system_bus;
 
   char **argv;
 

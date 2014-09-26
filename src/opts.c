@@ -43,6 +43,9 @@ static void usage() {
          "                           private: Use a private /run directory\n"
          "  --(no-)run-media        Determine whether /run/media/USER will be available in the jail.\n"
          "                          This option has no effect with --run=host.\n"
+         "  --system-bus            Determine whether the host's DBUS socket directory (/run/dbus)\n"
+         "                          should be available in the jail.\n"
+         "                          This option has no effect with --run=host.\n"
          "\n");
 }
 
@@ -79,6 +82,7 @@ bool string_to_integer(unsigned int *val, const char *str);
 #define OPT_KEEP_IPC_NAMESPACE 260
 #define OPT_X11_TRUSTED 261
 #define OPT_X11_TIMEOUT 262
+#define OPT_KEEP_SYSTEM_BUS 263
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config) {
   int opt;
@@ -108,6 +112,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
     { "run",                required_argument, 0,  'R'                    },
     { "run-media",          no_argument,       0,  OPT_RUN_MEDIA          },
     { "no-run-media",       no_argument,       0,  OPT_NO_RUN_MEDIA       },
+    { "system-bus",         no_argument,       0,  OPT_KEEP_SYSTEM_BUS    },
     { 0,                    0,                 0,  0                      }
   };
 
@@ -131,6 +136,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   opts->unshare_network = config->default_private_network;
   opts->run_mode = config->default_run_mode;
   opts->bind_run_media = config->default_bind_run_media;
+  opts->keep_system_bus = false;
   /* initialize directory lists */
   opts->keep_mounts = malloc(NUM_ENTRIES*sizeof(char*));
   keep_mounts_size = NUM_ENTRIES;
@@ -204,6 +210,9 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
         break;
       case OPT_NO_RUN_MEDIA:
         opts->bind_run_media = false;
+        break;
+      case OPT_KEEP_SYSTEM_BUS:
+        opts->keep_system_bus = true;
         break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);

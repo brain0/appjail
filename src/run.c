@@ -34,6 +34,13 @@ void setup_run(const appjail_options *opts) {
         fprintf(stderr, "Media directory does not exist yet, it will be unavailable inside the jail.\n");
     }
 
+    if( opts->keep_system_bus ) {
+      if( mkdir("rundbus", 0755) == -1 )
+        errExit("mkdir");
+      if( cap_mount("/run/dbus", "rundbus", NULL, MS_BIND | MS_REC, NULL) == -1 )
+        errExit("mount --rbind /run/dbus rundbus");
+    }
+
     setup_path("run", "/run", 0755);
     if( mkdir("/run/user", 0755) == -1 )
       errExit("mkdir /run/user");
@@ -52,6 +59,13 @@ void setup_run(const appjail_options *opts) {
       cap_chown("/run/media", 0, 0);
       if( cap_mount("runmedia", mediapath, NULL, MS_MOVE, NULL ) == -1 )
         errExit("mount --move runmedia /run/media/USER");
+    }
+
+    if( opts->keep_system_bus ) {
+      if( mkdir("/run/dbus", 0755) )
+        errExit("mkdir");
+      if( cap_mount("rundbus", "/run/dbus", NULL, MS_MOVE, NULL ) == -1 )
+        errExit("mount --move rundbus /run/dbus");
     }
 
     cap_chown("/run", 0, 0);
