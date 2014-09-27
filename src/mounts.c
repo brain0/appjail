@@ -1,4 +1,5 @@
 #include "common.h"
+#include "list_helpers.h"
 #include "mounts.h"
 #include "cap.h"
 #include <libmount.h>
@@ -31,41 +32,6 @@ static void unmount_recursive(struct libmnt_table *t, struct libmnt_fs *r) {
     errExit("umount");
 
   mnt_free_iter(i);
-}
-
-typedef enum {
-  HAS_CHILD_OF_NEEDLE,
-  HAS_PARENT_OF_NEEDLE,
-  HAS_EXACT_PATH
-} has_path_mode_t;
-
-static bool has_path(strlist *l, const char *p, has_path_mode_t mode) {
-  strlist_node *i;
-  size_t len, lenp;
-
-  lenp = strlen(p);
-  /* Deal with trailing slashes */
-  if(p[lenp-1] == '/')
-    lenp--;
-  for(i = strlist_first(l); i != NULL; i = strlist_next(i)) {
-    len = strlen(strlist_val(i));
-    switch(mode) {
-      case HAS_CHILD_OF_NEEDLE:
-        if(!strncmp(strlist_val(i), p, lenp) && (lenp == len || (len > lenp && strlist_val(i)[lenp] == '/')))
-          return true;
-        break;
-      case HAS_PARENT_OF_NEEDLE:
-        if(!strncmp(strlist_val(i), p, len) && (lenp == len || (lenp > len && p[len] == '/')))
-          return true;
-        break;
-      case HAS_EXACT_PATH:
-        if(!strcmp(strlist_val(i), p))
-          return true;
-        break;
-    }
-  }
-
-  return false;
 }
 
 static void unmount_or_make_private(struct libmnt_table *t, struct libmnt_fs *r, appjail_options *opts) {
