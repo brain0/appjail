@@ -39,32 +39,30 @@ typedef enum {
   HAS_EXACT_PATH
 } has_path_mode_t;
 
-static bool has_path(char **l, const char *p, has_path_mode_t mode) {
-  char **i;
+static bool has_path(strlist *l, const char *p, has_path_mode_t mode) {
+  strlist_node *i;
   size_t len, lenp;
 
-  i = l;
   lenp = strlen(p);
   /* Deal with trailing slashes */
   if(p[lenp-1] == '/')
     lenp--;
-  while(*i != NULL) {
-    len = strlen(*i);
+  for(i = strlist_first(l); i != NULL; i = strlist_next(i)) {
+    len = strlen(strlist_val(i));
     switch(mode) {
       case HAS_CHILD_OF_NEEDLE:
-        if(!strncmp(*i, p, lenp) && (lenp == len || (len > lenp && (*i)[lenp] == '/')))
+        if(!strncmp(strlist_val(i), p, lenp) && (lenp == len || (len > lenp && strlist_val(i)[lenp] == '/')))
           return true;
         break;
       case HAS_PARENT_OF_NEEDLE:
-        if(!strncmp(*i, p, len) && (lenp == len || (lenp > len && p[len] == '/')))
+        if(!strncmp(strlist_val(i), p, len) && (lenp == len || (lenp > len && p[len] == '/')))
           return true;
         break;
       case HAS_EXACT_PATH:
-        if(!strcmp(*i, p))
+        if(!strcmp(strlist_val(i), p))
           return true;
         break;
     }
-    ++i;
   }
 
   return false;

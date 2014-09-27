@@ -59,21 +59,7 @@ char *remove_trailing_slash(const char *p) {
   return r;
 }
 
-static void add_array_entry(char ***array, unsigned int *size, unsigned int *num, char *entry) {
-  if(*num >= *size)
-    if((*array = realloc(*array, (*size*=2)*sizeof(char*))) == NULL)
-      errExit("realloc");
-  if((*array)[*num-1] != NULL)
-    errExitNoErrno("Internal error");
-  (*array)[*num-1] = entry;
-  (*array)[(*num)++] = NULL;
-}
-
 bool string_to_integer(unsigned int *val, const char *str);
-
-#define ADD_ARRAY_ENTRY_KEEP(p) add_array_entry(&(opts->keep_mounts), &keep_mounts_size, &keep_mounts_num, remove_trailing_slash(p))
-#define ADD_ARRAY_ENTRY_KEEP_FULL(p) add_array_entry(&(opts->keep_mounts_full), &keep_mounts_full_size, &keep_mounts_full_num, remove_trailing_slash(p))
-#define ADD_ARRAY_ENTRY_SHARED(p) add_array_entry(&(opts->shared_mounts), &shared_mounts_size, &shared_mounts_num, remove_trailing_slash(p))
 
 #define OPT_KEEP_SHM 256
 #define OPT_KEEP_FULL 257
@@ -86,12 +72,6 @@ bool string_to_integer(unsigned int *val, const char *str);
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config) {
   int opt;
-  unsigned int keep_mounts_num,
-      keep_mounts_size,
-      keep_mounts_full_num,
-      keep_mounts_full_size,
-      shared_mounts_num,
-      shared_mounts_size;
   appjail_options *opts;
   struct passwd *pw;
   static struct option long_options[] = {
@@ -138,18 +118,9 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   opts->bind_run_media = config->default_bind_run_media;
   opts->keep_system_bus = false;
   /* initialize directory lists */
-  opts->keep_mounts = malloc(NUM_ENTRIES*sizeof(char*));
-  keep_mounts_size = NUM_ENTRIES;
-  keep_mounts_num = 1;
-  opts->keep_mounts[0] = NULL;
-  opts->keep_mounts_full = malloc(NUM_ENTRIES*sizeof(char*));
-  keep_mounts_full_size = NUM_ENTRIES;
-  keep_mounts_full_num = 1;
-  opts->keep_mounts_full[0] = NULL;
-  opts->shared_mounts = malloc(NUM_ENTRIES*sizeof(char*));
-  shared_mounts_size = NUM_ENTRIES;
-  shared_mounts_num = 1;
-  opts->shared_mounts[0] = NULL;
+  opts->keep_mounts = strlist_new();
+  opts->keep_mounts_full = strlist_new();
+  opts->shared_mounts = strlist_new();
 
   while((opt = getopt_long(argc, argv, "+:hVpH:K:S:XNnR:", long_options, NULL)) != -1) {
     switch(opt) {
@@ -177,13 +148,13 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
         opts->keep_ipc_namespace = true;
         break;
       case 'K':
-        ADD_ARRAY_ENTRY_KEEP(optarg);
+        strlist_append(opts->keep_mounts, remove_trailing_slash(optarg));
         break;
       case OPT_KEEP_FULL:
-        ADD_ARRAY_ENTRY_KEEP_FULL(optarg);
+        strlist_append(opts->keep_mounts_full, remove_trailing_slash(optarg));
         break;
       case 'S':
-        ADD_ARRAY_ENTRY_SHARED(optarg);
+        strlist_append(opts->shared_mounts, remove_trailing_slash(optarg));
         break;
       case 'X':
         opts->keep_x11 = true;
@@ -230,28 +201,20 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   }
   opts->argv = &(argv[optind]);
 
-  opts->special_mounts = malloc(5*sizeof(char*));
-  opts->special_mounts[0] = "/dev";
-  opts->special_mounts[1] = "/proc";
-  opts->special_mounts[2] = "/run";
-  opts->special_mounts[3] = APPJAIL_SWAPDIR;
-  opts->special_mounts[4] = NULL;
+  opts->special_mounts = strlist_new();
+  strlist_append_copy(opts->special_mounts, "/dev");
+  strlist_append_copy(opts->special_mounts, "/proc");
+  strlist_append_copy(opts->special_mounts, "/run");
+  strlist_append_copy(opts->special_mounts, APPJAIL_SWAPDIR);
 
   return opts;
 }
 
 void free_options(appjail_options *opts) {
-  char** p;
-  for(p = opts->keep_mounts; *p!=NULL; ++p)
-    free(*p);
-  for(p = opts->keep_mounts_full; *p!=NULL; ++p)
-    free(*p);
-  for(p = opts->shared_mounts; *p!=NULL; ++p)
-    free(*p);
-  free(opts->keep_mounts);
-  free(opts->keep_mounts_full);
-  free(opts->shared_mounts);
-  free(opts->special_mounts);
+  strlist_free(opts->keep_mounts);
+  strlist_free(opts->keep_mounts_full);
+  strlist_free(opts->shared_mounts);
+  strlist_free(opts->special_mounts);
   free(opts->user);
   free(opts);
 }

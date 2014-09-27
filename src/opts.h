@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "configfile.h"
+#include "list.h"
 
 typedef struct {
   uid_t uid;
@@ -17,9 +18,9 @@ typedef struct {
 
   char **argv;
 
-  char **keep_mounts, **keep_mounts_full;
-  char **shared_mounts;
-  char **special_mounts;
+  strlist *keep_mounts, *keep_mounts_full;
+  strlist *shared_mounts;
+  strlist *special_mounts;
   bool keep_x11;
   bool x11_trusted;
   unsigned int x11_timeout;
