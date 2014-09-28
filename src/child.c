@@ -4,6 +4,7 @@
 #include "devpts.h"
 #include "opts.h"
 #include "home.h"
+#include "mask.h"
 #include "mounts.h"
 #include "network.h"
 #include "path.h"
@@ -72,6 +73,9 @@ int child_main(void *arg) {
   cap_chown("/home", 0, 0);
   if(!opts->keep_shm)
     cap_chown("/dev/shm", 0, 0);
+
+  /* Mask directories */
+  mask_directories(opts);
 
   /* We drop all capabilities from the permitted capability set */
   drop_caps_forever();

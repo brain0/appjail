@@ -21,6 +21,7 @@ typedef struct {
   strlist *keep_mounts, *keep_mounts_full;
   strlist *shared_mounts;
   strlist *special_mounts;
+  strlist *mask_directories;
   bool keep_x11;
   bool x11_trusted;
   unsigned int x11_timeout;

@@ -33,6 +33,7 @@ static void usage() {
          "                          This option also affects all mounts that are parents of DIR.\n"
          "  --keep-full <DIR>       Like --keep, but also affects all submounts of DIR.\n"
          "  -S, --shared <DIR>      Do not force private mount propagation on submounts of DIR.\n"
+         "  -M, --mask <DIR>        Make DIR and all its subdirectories inaccessible in the jail.\n"
          "  -X, --x11               Allow X11 access.\n"
          "  --x11-trusted           Generate a trusted X11 cookie (an untrusted cookie is used by default).\n"
          "  --x11-timeout <N>       If no X11 client is connected for N seconds, the cookie is revoked.\n"
@@ -93,6 +94,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
     { "run-media",          no_argument,       0,  OPT_RUN_MEDIA          },
     { "no-run-media",       no_argument,       0,  OPT_NO_RUN_MEDIA       },
     { "system-bus",         no_argument,       0,  OPT_KEEP_SYSTEM_BUS    },
+    { "mask",               required_argument, 0,  'M'                    },
     { 0,                    0,                 0,  0                      }
   };
 
@@ -121,8 +123,9 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   opts->keep_mounts = strlist_new();
   opts->keep_mounts_full = strlist_new();
   opts->shared_mounts = strlist_new();
+  opts->mask_directories = strlist_new();
 
-  while((opt = getopt_long(argc, argv, "+:hVpH:K:S:XNnR:", long_options, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, "+:hVpH:K:S:XNnR:M:", long_options, NULL)) != -1) {
     switch(opt) {
       case 'V':
         version();
@@ -185,9 +188,12 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
       case OPT_KEEP_SYSTEM_BUS:
         opts->keep_system_bus = true;
         break;
+      case 'M':
+        strlist_append(opts->mask_directories, remove_trailing_slash(optarg));
+        break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
       case '?':
         if(optopt == '\0')
           fprintf(stderr, "Invalid option: %s\n", argv[optind-1]);
@@ -215,6 +221,7 @@ void free_options(appjail_options *opts) {
   strlist_free(opts->keep_mounts_full);
   strlist_free(opts->shared_mounts);
   strlist_free(opts->special_mounts);
+  strlist_free(opts->mask_directories);
   free(opts->user);
   free(opts);
 }
