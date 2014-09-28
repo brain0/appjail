@@ -23,3 +23,6 @@ typedef enum { RUN_HOST, RUN_USER, RUN_PRIVATE } run_mode_t;
 #define errWarn(msg) do { \
   perror(msg);\
   } while (0)
+
+bool string_to_unsigned_integer(unsigned int *val, const char *str);
+bool string_to_integer(int *val, const char *str);

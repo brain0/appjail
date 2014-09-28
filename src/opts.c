@@ -5,8 +5,6 @@
 #include <pwd.h>
 #include <errno.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <limits.h>
 
 #define NUM_ENTRIES 10
 
@@ -60,8 +58,6 @@ char *remove_trailing_slash(const char *p) {
   }
   return r;
 }
-
-bool string_to_integer(unsigned int *val, const char *str);
 
 #define OPT_KEEP_SHM 256
 #define OPT_KEEP_FULL 257
@@ -167,7 +163,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
         opts->x11_trusted = true;
         break;
       case OPT_X11_TIMEOUT:
-        if(!string_to_integer(&(opts->x11_timeout), optarg))
+        if(!string_to_unsigned_integer(&(opts->x11_timeout), optarg))
           errExitNoErrno("Invalid argument to --x11-timeout.");
         break;
       case 'N':
@@ -240,19 +236,4 @@ bool string_to_run_mode(run_mode_t *result, const char *s) {
     ret = false;
 
   return ret;
-}
-
-bool string_to_integer(unsigned int *val, const char *str) {
-  unsigned long int res;
-  char *err;
-
-  if( strlen(str) == 0 )
-    return false;
-  res = strtoul(str, &err, 10);
-  if( err != NULL && *err != '\0' )
-    return false;
-  if( res > UINT_MAX )
-    return false;
-  *val = res;
-  return true;
 }
