@@ -12,6 +12,7 @@
 
 static void version() {
   printf("appjail " APPJAIL_VERSION " by Thomas Bächler <thomas@archlinux.org>\n"
+         "\n"
          "Available at https://github.com/brain0/appjail\n"
          "Licensed under the conditions of the WTFPL (http://www.wtfpl.net/)\n"
          "\n");
