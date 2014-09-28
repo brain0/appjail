@@ -1,16 +1,20 @@
 #include "list_helpers.h"
 #include <string.h>
 
-static bool s_is_child_of_n(const char *s, size_t len_s, const char *n, size_t len_n) {
-  return !strncmp(s, n, len_n) && (len_n == len_s || (len_s > len_n && s[len_n] == '/'));
+static bool s_is_child_of_n(const char *s, size_t len_s, const char *n, size_t len_n, bool strict) {
+  return !strncmp(s, n, len_n) && ((!strict && len_n == len_s) || (len_s > len_n && s[len_n] == '/'));
 }
 
 static bool test_s_is_child_of_n(const char *s, size_t len_s, const char *n, size_t len_n) {
-  return s_is_child_of_n(s, len_s, n, len_n);
+  return s_is_child_of_n(s, len_s, n, len_n, false);
 }
 
 static bool test_s_is_parent_of_n(const char *s, size_t len_s, const char *n, size_t len_n)  {
-  return s_is_child_of_n(n, len_n, s, len_s);
+  return s_is_child_of_n(n, len_n, s, len_s, false);
+}
+
+static bool test_s_is_strict_parent_of_n(const char *s, size_t len_s, const char *n, size_t len_n)  {
+  return s_is_child_of_n(n, len_n, s, len_s, true);
 }
 
 static bool test_exact_match(const char *s, size_t len_s, const char *n, size_t len_n) {
@@ -29,6 +33,9 @@ bool has_path(strlist *l, const char *needle, has_path_mode_t mode) {
       break;
     case HAS_PARENT_OF_NEEDLE:
       test_fn = test_s_is_parent_of_n;
+      break;
+    case HAS_STRICT_PARENT_OF_NEEDLE:
+      test_fn = test_s_is_strict_parent_of_n;
       break;
     case HAS_EXACT_PATH:
       test_fn = test_exact_match;
