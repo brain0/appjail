@@ -2,6 +2,7 @@
 #include "common.h"
 #include "cap.h"
 #include "devpts.h"
+#include "fd.h"
 #include "opts.h"
 #include "home.h"
 #include "mask.h"
@@ -79,6 +80,9 @@ int child_main(void *arg) {
 
   /* We drop all capabilities from the permitted capability set */
   drop_caps_forever();
+
+  /* make sure no file descriptors leak into the jail */
+  close_file_descriptors();
 
   if(opts->argv[0] != NULL) {
     execvp(opts->argv[0], opts->argv);
