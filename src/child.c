@@ -3,6 +3,7 @@
 #include "cap.h"
 #include "devpts.h"
 #include "fd.h"
+#include "initstub.h"
 #include "opts.h"
 #include "home.h"
 #include "mask.h"
@@ -92,6 +93,9 @@ int child_main(void *arg) {
 
   /* signal the main process */
   signal_mainpid(opts->pipefd);
+
+  if(opts->initstub)
+    run_initstub(opts->argv);
 
   if(opts->argv[0] != NULL) {
     execvp(opts->argv[0], opts->argv);

@@ -1,3 +1,5 @@
 #pragma once
 
-int run_command(const char *file, char *const argv[]);
+#include "common.h"
+
+int run_command(const char *file, char *const argv[], bool wait);

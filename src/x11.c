@@ -45,7 +45,7 @@ void get_x11(const appjail_options *opts) {
   // Create an empty file to silence an xauth error message
   if( (fd = open(cmd_argv[2], O_CREAT, 0600)) != -1)
     close(fd);
-  if( run_command(cmd_argv[0], cmd_argv) != EXIT_SUCCESS )
+  if( run_command(cmd_argv[0], cmd_argv, true) != EXIT_SUCCESS )
     errExit("xauth");
 }
 
@@ -67,7 +67,7 @@ void setup_x11() {
   cmd_argv[1] = APPJAIL_SWAPDIR "/Xauthority";
   cmd_argv[2] = xauthority;
   cmd_argv[3] = NULL;
-  if( run_command(cmd_argv[0], cmd_argv) != EXIT_SUCCESS )
+  if( run_command(cmd_argv[0], cmd_argv, true) != EXIT_SUCCESS )
     errExit("mv");
 }
 

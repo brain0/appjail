@@ -28,6 +28,7 @@ typedef struct {
   bool unshare_network;
 
   bool daemonize;
+  bool initstub;
 
   /* Internal options */
   bool setup_tty;

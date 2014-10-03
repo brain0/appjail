@@ -3,6 +3,7 @@
 #include "cap.h"
 #include "clone.h"
 #include "configfile.h"
+#include "initstub.h"
 #include "opts.h"
 #include "wait.h"
 
@@ -11,6 +12,7 @@
 #include <sched.h>
 #include <sys/signalfd.h>
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 
 int main(int argc, char *argv[]) {
@@ -24,6 +26,19 @@ int main(int argc, char *argv[]) {
   int sfd;
   /* pipes */
   int pipefds[2];
+
+  if(!strcmp(argv[0], "initstub")) {
+    /* appjail is rexecuting itself as stub init process
+     *
+     * First, ensure we have no privileges (we may have some
+     * when appjail was started with the -p option).
+     */
+    drop_caps_forever();
+    /* If we are not PID 1, we abort right away. */
+    if(getpid() == 1)
+      return initstub_main(argc, argv);
+    exit(EXIT_FAILURE);
+  }
 
   /* Drop all privileges we might accidentally have */
   drop_caps();
