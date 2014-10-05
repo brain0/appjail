@@ -8,6 +8,7 @@
 #include "mask.h"
 #include "mounts.h"
 #include "network.h"
+#include "notify.h"
 #include "path.h"
 #include "run.h"
 #include "tty.h"
@@ -83,6 +84,9 @@ int child_main(void *arg) {
 
   /* make sure no file descriptors leak into the jail */
   close_file_descriptors();
+
+  /* signal the main process */
+  signal_mainpid(opts->pipefd);
 
   if(opts->argv[0] != NULL) {
     execvp(opts->argv[0], opts->argv);

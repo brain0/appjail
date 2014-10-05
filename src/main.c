@@ -6,10 +6,12 @@
 #include "opts.h"
 #include "wait.h"
 
+#include <fcntl.h>
 #include <sys/prctl.h>
 #include <sched.h>
 #include <sys/signalfd.h>
 #include <signal.h>
+#include <unistd.h>
 
 int main(int argc, char *argv[]) {
   pid_t pid1;
@@ -20,6 +22,8 @@ int main(int argc, char *argv[]) {
   /* signalfd */
   sigset_t mask, oldmask;
   int sfd;
+  /* pipes */
+  int pipefds[2];
 
   /* Drop all privileges we might accidentally have */
   drop_caps();
@@ -46,6 +50,11 @@ int main(int argc, char *argv[]) {
   if( (sfd = signalfd(-1, &mask, SFD_CLOEXEC)) == -1 )
     errExit("signalfd");
 
+  /* set up the pipe */
+  if( pipe2(pipefds, O_CLOEXEC) == -1)
+    errExit("pipe");
+  opts->pipefd = pipefds[1];
+
   /* Clone a child in an isolated namespace */
   clone_flags = CLONE_NEWNS | CLONE_NEWPID | SIGCHLD;
   if(opts->unshare_network)
@@ -62,9 +71,11 @@ int main(int argc, char *argv[]) {
   if (pid1 == -1)
     errExit("clone");
 
+  close(pipefds[1]);
+
   /* Free some memory */
   free_options(opts);
 
-  wait_for_child(pid1, sfd);
+  wait_for_child(pid1, sfd, pipefds[0]);
   return EXIT_FAILURE;
 }

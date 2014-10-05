@@ -29,6 +29,7 @@ typedef struct {
 
   /* Internal options */
   bool setup_tty;
+  int pipefd;
 } appjail_options;
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config);

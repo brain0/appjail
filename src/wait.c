@@ -5,7 +5,7 @@
 #include <sys/signalfd.h>
 #include <sys/wait.h>
 
-static void handle_signalfd(int sfd, pid_t pid1) {
+static void handle_signalfd(int sfd, pid_t pid1, bool child_initialized) {
   struct signalfd_siginfo fdsi;
   pid_t spid;
   size_t s;
@@ -18,15 +18,48 @@ static void handle_signalfd(int sfd, pid_t pid1) {
   if(fdsi.ssi_signo == SIGCHLD)
     while((spid = waitpid(-1, &status, WNOHANG)) > 0)
       if(spid == pid1) {
-        if( WIFEXITED(status) )
-          exit( WEXITSTATUS(status) );
-        else
-          exit( EXIT_FAILURE );
+        if(child_initialized) {
+          if( WIFEXITED(status) )
+            exit( WEXITSTATUS(status) );
+          else
+            exit( EXIT_FAILURE );
+        }
+        else {
+          fprintf(stderr, APPLICATION_NAME ": Child failed to initialize.\n");
+          exit(EXIT_FAILURE);
+        }
       }
 }
 
-void wait_for_child(pid_t pid1, int sfd) {
+
+static void handle_pipe(int *pipefd, bool *child_initialized) {
+  size_t s;
+  uint8_t u = 0;
+
+  if( *pipefd == -1 )
+    return;
+
+  s = read(*pipefd, &u, sizeof(uint8_t));
+  if(s == 0) {
+    /* end of file, this is an error if the child has
+     * not signaled that it finished initializing */
+    if( *child_initialized )
+      *pipefd = -1;
+    else {
+      fprintf(stderr, APPLICATION_NAME ": Child failed to initialize.\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+  else if(s == sizeof(uint8_t) && u == 1) {
+    /* child was successfully initialized */
+    fprintf(stderr, APPLICATION_NAME ": Child initialized.\n");
+    *child_initialized = true;
+  }
+}
+
+void wait_for_child(pid_t pid1, int sfd, int pipefd) {
   int nfds = -1;
+  bool child_initialized = false;
   fd_set rfd;
 
   while(true) {
@@ -35,10 +68,19 @@ void wait_for_child(pid_t pid1, int sfd) {
     FD_SET(sfd, &rfd);
     if(sfd >= nfds)
       nfds = sfd + 1;
+    if( pipefd != -1 ) {
+      FD_SET(pipefd, &rfd);
+      if(pipefd >= nfds)
+        nfds = pipefd + 1;
+    }
+
     if( select(nfds, &rfd, NULL, NULL, NULL) < 0 )
       errExit("select");
 
     if( FD_ISSET(sfd, &rfd) )
-      handle_signalfd(sfd, pid1);
+      handle_signalfd(sfd, pid1, child_initialized);
+
+    if( pipefd != -1 && FD_ISSET(pipefd, &rfd) )
+      handle_pipe(&pipefd, &child_initialized);
   }
 }
