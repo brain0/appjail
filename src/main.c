@@ -64,18 +64,19 @@ int main(int argc, char *argv[]) {
 
   chldopts.sfd = sfd;
   chldopts.old_sigmask = &oldmask;
+  chldopts.daemonize = opts->daemonize;
 
   pid1 = launch_child(clone_flags, &chldopts, child_main, (void*)opts);
 
   /* clone failed, we are done */
   if (pid1 == -1)
-    errExit("clone");
+    errExit("launch_child");
 
   close(pipefds[1]);
 
   /* Free some memory */
   free_options(opts);
 
-  wait_for_child(pid1, sfd, pipefds[0]);
+  wait_for_child(pid1, sfd, chldopts.daemonize, pipefds[0]);
   return EXIT_FAILURE;
 }

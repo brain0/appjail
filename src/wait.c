@@ -5,7 +5,7 @@
 #include <sys/signalfd.h>
 #include <sys/wait.h>
 
-static void handle_signalfd(int sfd, pid_t pid1, bool child_initialized) {
+static void handle_signalfd(int sfd, pid_t pid1, bool daemonize, bool child_initialized) {
   struct signalfd_siginfo fdsi;
   pid_t spid;
   size_t s;
@@ -17,7 +17,7 @@ static void handle_signalfd(int sfd, pid_t pid1, bool child_initialized) {
 
   if(fdsi.ssi_signo == SIGCHLD)
     while((spid = waitpid(-1, &status, WNOHANG)) > 0)
-      if(spid == pid1) {
+      if(!daemonize && spid == pid1) {
         if(child_initialized) {
           if( WIFEXITED(status) )
             exit( WEXITSTATUS(status) );
@@ -32,7 +32,7 @@ static void handle_signalfd(int sfd, pid_t pid1, bool child_initialized) {
 }
 
 
-static void handle_pipe(int *pipefd, bool *child_initialized) {
+static void handle_pipe(int *pipefd, bool daemonize, bool *child_initialized) {
   size_t s;
   uint8_t u = 0;
 
@@ -54,10 +54,12 @@ static void handle_pipe(int *pipefd, bool *child_initialized) {
     /* child was successfully initialized */
     fprintf(stderr, APPLICATION_NAME ": Child initialized.\n");
     *child_initialized = true;
+    if( daemonize )
+      exit(EXIT_SUCCESS);
   }
 }
 
-void wait_for_child(pid_t pid1, int sfd, int pipefd) {
+void wait_for_child(pid_t pid1, int sfd, bool daemonize, int pipefd) {
   int nfds = -1;
   bool child_initialized = false;
   fd_set rfd;
@@ -78,9 +80,9 @@ void wait_for_child(pid_t pid1, int sfd, int pipefd) {
       errExit("select");
 
     if( FD_ISSET(sfd, &rfd) )
-      handle_signalfd(sfd, pid1, child_initialized);
+      handle_signalfd(sfd, pid1, daemonize, child_initialized);
 
     if( pipefd != -1 && FD_ISSET(pipefd, &rfd) )
-      handle_pipe(&pipefd, &child_initialized);
+      handle_pipe(&pipefd, daemonize, &child_initialized);
   }
 }

@@ -23,6 +23,7 @@ static void usage() {
          "\n"
          "Options:\n"
          "  -h, --help              Print command help and exit.\n"
+         "  -d, --daemonize         Run the jailed process in the background.\n"
          "  -p, --allow-new-privs   Don't prevent setuid binaries from raising privileges.\n"
          "  --keep-shm              Keep the host's /dev/shm directory.\n"
          "  --keep-ipc-namespace    Stay in the host's IPC namespace. This is necessary for\n"
@@ -92,6 +93,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
     { "no-run-media",       no_argument,       0,  OPT_NO_RUN_MEDIA       },
     { "system-bus",         no_argument,       0,  OPT_KEEP_SYSTEM_BUS    },
     { "mask",               required_argument, 0,  'M'                    },
+    { "daemonize",          no_argument,       0,  'd'                    },
     { 0,                    0,                 0,  0                      }
   };
 
@@ -116,13 +118,14 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   opts->run_mode = config->default_run_mode;
   opts->bind_run_media = config->default_bind_run_media;
   opts->keep_system_bus = false;
+  opts->daemonize = false;
   /* initialize directory lists */
   opts->keep_mounts = strlist_new();
   opts->keep_mounts_full = strlist_new();
   opts->shared_mounts = strlist_new();
   opts->mask_directories = strlist_new();
 
-  while((opt = getopt_long(argc, argv, "+:hVpH:K:S:XNnR:M:", long_options, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, "+:hVpH:K:S:XNnR:M:d", long_options, NULL)) != -1) {
     switch(opt) {
       case 'V':
         version();
@@ -187,6 +190,9 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
         break;
       case 'M':
         strlist_append(opts->mask_directories, remove_trailing_slash(optarg));
+        break;
+      case 'd':
+        opts->daemonize = true;
         break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);

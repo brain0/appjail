@@ -4,6 +4,7 @@
 #include "cap.h"
 #include <stdlib.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 
 /* glibc's clone() wrapper requires that you pass a non-NULL argument
  * for the child stack. This is unnecessary in our case and complicates
@@ -37,9 +38,27 @@ static void restore_sigmask( sigset_t **mask ) {
 pid_t launch_child(int flags, child_options *chldopts, int (*fn)(void *), void *arg) {
   pid_t ret;
 
+  if(chldopts->daemonize) {
+    ret = fork();
+    switch(ret) {
+      case 0:
+        /* Do some cleanup in the child */
+        close_fd(&(chldopts->sfd));
+        restore_sigmask(&(chldopts->old_sigmask));
+        /* Become a session leader */
+        if( setsid() == -1 )
+          errExit("setsid");
+        /* In the child, go on */
+        break;
+      default:
+        /* Parent, drop all capabilities from the permitted capability set */
+        drop_caps_forever();
+        return ret;
+    }
+  }
+
   need_cap(CAP_SYS_ADMIN);
   ret = clone1(flags);
-
   switch(ret) {
     case 0:
       /* Drop all capabilities from the effective capability set */
@@ -52,8 +71,13 @@ pid_t launch_child(int flags, child_options *chldopts, int (*fn)(void *), void *
       /* The last call should not have returned */
       exit(EXIT_FAILURE);
     default:
-      /* Drop all capabilities from the permitted capability set */
-      drop_caps_forever();
-      return ret;
+      if(chldopts->daemonize)
+        /* Parent, we exit right away */
+        exit(EXIT_SUCCESS);
+      else {
+        /* Parent, drop all capabilities from the permitted capability set */
+        drop_caps_forever();
+        return ret;
+      }
   }
 }

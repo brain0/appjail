@@ -10,6 +10,7 @@
 #include "network.h"
 #include "notify.h"
 #include "path.h"
+#include "redirect.h"
 #include "run.h"
 #include "tty.h"
 #include "x11.h"
@@ -84,6 +85,10 @@ int child_main(void *arg) {
 
   /* make sure no file descriptors leak into the jail */
   close_file_descriptors();
+
+  if(opts->daemonize)
+    /* redirect stdin, stderr, stdout to /dev/null */
+    redirect_to_dev_null();
 
   /* signal the main process */
   signal_mainpid(opts->pipefd);

@@ -9,7 +9,7 @@ void get_tty(appjail_options *opts) {
   const char *console;
   int fd;
 
-  opts->setup_tty = isatty(0);
+  opts->setup_tty = !opts->daemonize && isatty(0);
   
   if(opts->setup_tty) {
     /* Get name of the current TTY */

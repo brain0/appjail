@@ -27,6 +27,8 @@ typedef struct {
   unsigned int x11_timeout;
   bool unshare_network;
 
+  bool daemonize;
+
   /* Internal options */
   bool setup_tty;
   int pipefd;
