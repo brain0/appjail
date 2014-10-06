@@ -74,3 +74,65 @@ strlist_node *strlist_next(strlist_node *n) {
 const char *strlist_val(strlist_node *n) {
   return n->val;
 }
+
+struct intlist_node {
+  int val;
+  intlist_node *next;
+};
+
+struct intlist {
+  intlist_node *first;
+  intlist_node *last;
+};
+
+intlist *intlist_new() {
+  intlist *ret;
+
+  if( (ret = malloc(sizeof(intlist))) == NULL )
+    errExit("malloc");
+  ret->first = NULL;
+  ret->last = NULL;
+
+  return ret;
+}
+
+void intlist_free(intlist *l) {
+  intlist_node *cur, *next;
+
+  cur = l->first;
+  while( cur != NULL ) {
+    next = cur->next;
+    free( cur );
+    cur = next;
+  }
+  free( l );
+}
+
+void intlist_append(intlist *l, int i) {
+  intlist_node *n;
+
+  if( (n = malloc(sizeof(intlist_node))) == NULL )
+    errExit("malloc");
+  if( l->last == NULL ) {
+    l->first = n;
+    l->last = n;
+  }
+  else {
+    l->last->next = n;
+    l->last = n;
+  }
+  n->next = NULL;
+  n->val = i;
+}
+
+intlist_node *intlist_first(intlist *l) {
+  return l->first;
+}
+
+intlist_node *intlist_next(intlist_node *n) {
+  return n->next;
+}
+
+int intlist_val(intlist_node *n) {
+  return n->val;
+}

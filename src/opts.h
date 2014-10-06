@@ -29,6 +29,7 @@ typedef struct {
 
   bool daemonize;
   bool initstub;
+  intlist *keepfds;
 
   /* Internal options */
   bool setup_tty;

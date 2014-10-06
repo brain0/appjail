@@ -71,9 +71,10 @@ char *remove_trailing_slash(const char *p) {
 #define OPT_X11_TRUSTED 261
 #define OPT_X11_TIMEOUT 262
 #define OPT_KEEP_SYSTEM_BUS 263
+#define OPT_KEEP_FD 264
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config) {
-  int opt;
+  int opt, i;
   appjail_options *opts;
   struct passwd *pw;
   static struct option long_options[] = {
@@ -98,6 +99,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
     { "mask",               required_argument, 0,  'M'                    },
     { "daemonize",          no_argument,       0,  'd'                    },
     { "initstub",           no_argument,       0,  'i'                    },
+    { "keep-fd",            required_argument, 0,  OPT_KEEP_FD            },
     { 0,                    0,                 0,  0                      }
   };
 
@@ -129,6 +131,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   opts->keep_mounts_full = strlist_new();
   opts->shared_mounts = strlist_new();
   opts->mask_directories = strlist_new();
+  opts->keepfds = intlist_new();
 
   while((opt = getopt_long(argc, argv, "+:hVpH:K:S:XNnR:M:di", long_options, NULL)) != -1) {
     switch(opt) {
@@ -202,6 +205,11 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
       case 'i':
         opts->initstub = true;
         break;
+      case OPT_KEEP_FD:
+        if(!string_to_integer(&i, optarg))
+          errExitNoErrno("Invalid argument to --keep-fd.");
+        intlist_append(opts->keepfds, i);
+        break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);
         exit(EXIT_FAILURE);
@@ -233,6 +241,7 @@ void free_options(appjail_options *opts) {
   strlist_free(opts->shared_mounts);
   strlist_free(opts->special_mounts);
   strlist_free(opts->mask_directories);
+  intlist_free(opts->keepfds);
   free(opts->user);
   free(opts);
 }

@@ -11,3 +11,4 @@ typedef enum {
 } has_path_mode_t;
 
 bool has_path(strlist *l, const char *needle, has_path_mode_t mode);
+bool intlist_contains(intlist *l, int i);

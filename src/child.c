@@ -85,7 +85,7 @@ int child_main(void *arg) {
   drop_caps_forever();
 
   /* make sure no file descriptors leak into the jail */
-  close_file_descriptors();
+  close_file_descriptors(opts->keepfds);
 
   if(opts->daemonize)
     /* redirect stdin, stderr, stdout to /dev/null */

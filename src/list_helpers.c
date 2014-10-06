@@ -60,3 +60,12 @@ bool has_path(strlist *l, const char *needle, has_path_mode_t mode) {
 
   return false;
 }
+
+bool intlist_contains(intlist *l, int i) {
+  intlist_node *n;
+
+  for(n = intlist_first(l); n != NULL; n = intlist_next(n))
+    if(intlist_val(n) == i)
+      return true;
+  return false;
+}
