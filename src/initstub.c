@@ -9,7 +9,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-void run_initstub(char *argv[]) {
+void run_initstub(char *argv[], char **envp) {
   char **new_argv;
   int argc = 0, i;
 
@@ -30,7 +30,10 @@ void run_initstub(char *argv[]) {
     new_argv[3] = NULL;
   }
 
-  execv("/proc/self/exe", new_argv);
+  if(envp == NULL)
+    execv("/proc/self/exe", new_argv);
+  else
+    execve("/proc/self/exe", new_argv, envp);
   errExit("Failed to execute init stub.");
 }
 

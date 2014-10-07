@@ -2,6 +2,7 @@
 #include "common.h"
 #include "cap.h"
 #include "devpts.h"
+#include "env.h"
 #include "fd.h"
 #include "initstub.h"
 #include "opts.h"
@@ -20,6 +21,7 @@
 
 int child_main(void *arg) {
   appjail_options *opts = (appjail_options*)arg;
+  char **envp = NULL;
 
   init_libmount();
   /* Set up the private network */
@@ -87,6 +89,10 @@ int child_main(void *arg) {
   /* make sure no file descriptors leak into the jail */
   close_file_descriptors(opts->keepfds);
 
+  if(opts->cleanenv)
+    /* set up a clean environment */
+    setup_environment(&envp, opts->keepenv);
+
   if(opts->daemonize)
     /* redirect stdin, stderr, stdout to /dev/null */
     redirect_to_dev_null();
@@ -95,14 +101,20 @@ int child_main(void *arg) {
   signal_mainpid(opts->pipefd);
 
   if(opts->initstub)
-    run_initstub(opts->argv);
+    run_initstub(opts->argv, envp);
 
   if(opts->argv[0] != NULL) {
-    execvp(opts->argv[0], opts->argv);
+    if(envp == NULL)
+      execvp(opts->argv[0], opts->argv);
+    else
+      execvpe(opts->argv[0], opts->argv, envp);
     errExit("execvp");
   }
   else {
-    execl("/bin/sh", "/bin/sh", "-i", NULL);
+    if(envp == NULL)
+      execl("/bin/sh", "/bin/sh", "-i", NULL);
+    else
+      execle("/bin/sh", "/bin/sh", "-i", NULL, envp);
     errExit("execl");
   }
 }

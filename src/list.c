@@ -63,6 +63,15 @@ void strlist_append_copy(strlist *l, const char *s) {
   add_node(l)->val = strdup(s);
 }
 
+void strlist_append_copy_unique(strlist *l, const char *s) {
+  strlist_node *n;
+
+  for(n = strlist_first(l); n != NULL; n = strlist_next(n))
+    if(!strcmp(strlist_val(n), s))
+      return;
+  strlist_append_copy(l, s);
+}
+
 strlist_node *strlist_first(strlist *l) {
   return l->first;
 }

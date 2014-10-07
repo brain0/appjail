@@ -50,6 +50,9 @@ static void usage() {
          "  --system-bus             Determine whether the host's DBUS socket directory (/run/dbus)\n"
          "                           should be available in the jail.\n"
          "                           This option has no effect with --run=host.\n"
+         "  --no-clean-env           Do not clean the environment.\n"
+         "  --keep-env VAR           Keep the environment variable VAR.\n"
+         "                           This option has no effect with --no-clean-env.\n"
          "\n");
 }
 
@@ -72,6 +75,8 @@ char *remove_trailing_slash(const char *p) {
 #define OPT_X11_TIMEOUT 262
 #define OPT_KEEP_SYSTEM_BUS 263
 #define OPT_KEEP_FD 264
+#define OPT_NO_CLEAN_ENV 265
+#define OPT_KEEP_ENV 266
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config) {
   int opt, i;
@@ -100,6 +105,8 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
     { "daemonize",          no_argument,       0,  'd'                    },
     { "initstub",           no_argument,       0,  'i'                    },
     { "keep-fd",            required_argument, 0,  OPT_KEEP_FD            },
+    { "no-clean-env",       no_argument,       0,  OPT_NO_CLEAN_ENV       },
+    { "keep-env",           required_argument, 0,  OPT_KEEP_ENV           },
     { 0,                    0,                 0,  0                      }
   };
 
@@ -126,12 +133,33 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   opts->keep_system_bus = false;
   opts->daemonize = false;
   opts->initstub = false;
+  opts->cleanenv = true;
   /* initialize directory lists */
   opts->keep_mounts = strlist_new();
   opts->keep_mounts_full = strlist_new();
   opts->shared_mounts = strlist_new();
   opts->mask_directories = strlist_new();
   opts->keepfds = intlist_new();
+  opts->keepenv = strlist_new();
+
+  /* Special environment variables */
+  strlist_append_copy_unique(opts->keepenv, "PATH");
+  strlist_append_copy_unique(opts->keepenv, "USER");
+  strlist_append_copy_unique(opts->keepenv, "HOME");
+  strlist_append_copy_unique(opts->keepenv, "LANG");
+  strlist_append_copy_unique(opts->keepenv, "LC_CTYPE");
+  strlist_append_copy_unique(opts->keepenv, "LC_NUMERIC");
+  strlist_append_copy_unique(opts->keepenv, "LC_TIME");
+  strlist_append_copy_unique(opts->keepenv, "LC_COLLATE");
+  strlist_append_copy_unique(opts->keepenv, "LC_MONETARY");
+  strlist_append_copy_unique(opts->keepenv, "LC_MESSAGES");
+  strlist_append_copy_unique(opts->keepenv, "LC_PAPER");
+  strlist_append_copy_unique(opts->keepenv, "LC_NAME");
+  strlist_append_copy_unique(opts->keepenv, "LC_ADDRESS");
+  strlist_append_copy_unique(opts->keepenv, "LC_TELEPHONE");
+  strlist_append_copy_unique(opts->keepenv, "LC_MEASUREMENT");
+  strlist_append_copy_unique(opts->keepenv, "LC_IDENTIFICATION");
+  strlist_append_copy_unique(opts->keepenv, "LC_ALL");
 
   while((opt = getopt_long(argc, argv, "+:hVpH:K:S:XNnR:M:di", long_options, NULL)) != -1) {
     switch(opt) {
@@ -169,6 +197,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
         break;
       case 'X':
         opts->keep_x11 = true;
+        strlist_append_copy_unique(opts->keepenv, "DISPLAY");
         break;
       case OPT_X11_TRUSTED:
         opts->x11_trusted = true;
@@ -210,6 +239,12 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
           errExitNoErrno("Invalid argument to --keep-fd.");
         intlist_append(opts->keepfds, i);
         break;
+      case OPT_NO_CLEAN_ENV:
+        opts->cleanenv = false;
+        break;
+      case OPT_KEEP_ENV:
+        strlist_append_copy_unique(opts->keepenv, optarg);
+        break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);
         exit(EXIT_FAILURE);
@@ -242,6 +277,7 @@ void free_options(appjail_options *opts) {
   strlist_free(opts->special_mounts);
   strlist_free(opts->mask_directories);
   intlist_free(opts->keepfds);
+  strlist_free(opts->keepenv);
   free(opts->user);
   free(opts);
 }

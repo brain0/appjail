@@ -30,6 +30,8 @@ typedef struct {
   bool daemonize;
   bool initstub;
   intlist *keepfds;
+  strlist *keepenv;
+  bool cleanenv;
 
   /* Internal options */
   bool setup_tty;

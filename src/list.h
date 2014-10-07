@@ -11,6 +11,7 @@ void strlist_free(strlist *l);
 
 void strlist_append(strlist *l, char *s);
 void strlist_append_copy(strlist *l, const char *s);
+void strlist_append_copy_unique(strlist *l, const char *s);
 strlist_node *strlist_first(strlist *l);
 strlist_node *strlist_next(strlist_node *n);
 const char *strlist_val(strlist_node *n);

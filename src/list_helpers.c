@@ -61,6 +61,23 @@ bool has_path(strlist *l, const char *needle, has_path_mode_t mode) {
   return false;
 }
 
+size_t strlist_count(strlist *l) {
+  strlist_node *n;
+  size_t i;
+
+  for(n = strlist_first(l), i = 0; n != NULL; n = strlist_next(n), ++i);
+  return i;
+}
+
+bool strlist_contains(strlist *l, char *s) {
+  strlist_node *n;
+
+  for(n = strlist_first(l); n != NULL; n = strlist_next(n))
+    if(!strcmp(strlist_val(n), s))
+      return true;
+  return false;
+}
+
 bool intlist_contains(intlist *l, int i) {
   intlist_node *n;
 
