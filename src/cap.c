@@ -1,12 +1,43 @@
 #include "cap.h"
 #include <sys/mount.h>
 
+static cap_t emptycaps = NULL;
+
+void init_caps() {
+  cap_t prog;
+  cap_flag_value_t val;
+  cap_value_t c;
+
+  if(emptycaps == NULL) {
+    prog = cap_get_proc();
+    emptycaps = cap_init();
+
+    c = CAP_NET_ADMIN;
+    if( cap_get_flag(prog, c, CAP_PERMITTED, &val) == 0 && val == CAP_SET )
+      cap_set_flag(emptycaps, CAP_PERMITTED, 1, &c, CAP_SET);
+    c = CAP_CHOWN;
+    if( cap_get_flag(prog, c, CAP_PERMITTED, &val) == 0 && val == CAP_SET )
+      cap_set_flag(emptycaps, CAP_PERMITTED, 1, &c, CAP_SET);
+    c = CAP_SYS_ADMIN;
+    if( cap_get_flag(prog, c, CAP_PERMITTED, &val) != 0 || val != CAP_SET )
+      errExitNoErrno("The process is lacking the CAP_SYS_ADMIN capability. Exiting.");
+    cap_set_flag(emptycaps, CAP_PERMITTED, 1, &c, CAP_SET);
+
+    cap_free(prog);
+  }
+
+  if(cap_set_proc(emptycaps) == -1)
+    errExit("cap_set_proc");
+}
+
 bool want_cap(cap_value_t c) {
   bool ret;
   cap_t caps;
-  caps = cap_get_proc();
-  cap_clear_flag(caps, CAP_EFFECTIVE);
-  cap_clear_flag(caps, CAP_INHERITABLE);
+
+  if(emptycaps == NULL)
+    errExitNoErrno("Internal error: want_cap called, but emptycaps are not initialized.");
+
+  caps = cap_dup(emptycaps);
   cap_set_flag(caps, CAP_EFFECTIVE, 1, &c, CAP_SET);
   ret = cap_set_proc(caps) != -1;
   cap_free(caps);
@@ -20,13 +51,11 @@ void need_cap(cap_value_t c) {
 }
 
 void drop_caps() {
-  cap_t caps;
-  caps = cap_get_proc();
-  cap_clear_flag(caps, CAP_EFFECTIVE);
-  cap_clear_flag(caps, CAP_INHERITABLE);
-  if(cap_set_proc(caps) == -1)
+  if(emptycaps == NULL)
+    errExitNoErrno("Internal error: drops_caps called, but emptycaps are not initialized.");
+
+  if(cap_set_proc(emptycaps) == -1)
     errExit("cap_set_proc");
-  cap_free(caps);
 }
 
 void drop_caps_forever() {
@@ -35,6 +64,11 @@ void drop_caps_forever() {
   if(cap_set_proc(caps) == -1)
     errExit("cap_set_proc");
   cap_free(caps);
+
+  if(emptycaps != NULL) {
+    cap_free(emptycaps);
+    emptycaps = NULL;
+  }
 }
 
 int cap_mount(const char *source, const char *target,

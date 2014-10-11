@@ -4,6 +4,7 @@
 #include <sys/capability.h>
 #include <unistd.h>
 
+void init_caps();
 bool want_cap(cap_value_t c);
 void need_cap(cap_value_t c);
 void drop_caps();

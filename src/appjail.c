@@ -26,8 +26,11 @@ int appjail_main(int argc, char *argv[]) {
   /* pipes */
   int pipefds[2];
 
-  /* Drop all privileges we might accidentally have */
-  drop_caps();
+  /* Initialize the capability handling. Drop all privileges
+   * we might accidentally have and only set the permitted
+   * capabilities we will need later.
+   */
+  init_caps();
 
   /* Parse configuration */
   config = parse_config();
