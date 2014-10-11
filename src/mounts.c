@@ -2,8 +2,9 @@
 #include "list_helpers.h"
 #include "mounts.h"
 #include "cap.h"
-#include <libmount.h>
+#include <sys/mount.h>
 #include <string.h>
+#include <libmount.h>
 
 void init_libmount() {
   /* libmount setup */
