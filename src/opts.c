@@ -53,6 +53,7 @@ static void usage() {
          "  --no-clean-env           Do not clean the environment.\n"
          "  --keep-env VAR           Keep the environment variable VAR.\n"
          "                           This option has no effect with --no-clean-env.\n"
+         "  --keep-fd FD             Do not close the file descriptor FD.\n"
          "\n");
 }
 
