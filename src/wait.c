@@ -15,7 +15,7 @@ static void handle_signalfd(int sfd, pid_t pid1, bool daemonize, bool child_init
   if (s != sizeof(struct signalfd_siginfo))
     errExit("read");
 
-  if(fdsi.ssi_signo == SIGCHLD)
+  if(fdsi.ssi_signo == SIGCHLD) {
     while((spid = waitpid(-1, &status, WNOHANG)) > 0)
       if(!daemonize && spid == pid1) {
         if(child_initialized) {
@@ -29,6 +29,9 @@ static void handle_signalfd(int sfd, pid_t pid1, bool daemonize, bool child_init
           exit(EXIT_FAILURE);
         }
       }
+  }
+  else
+    kill(pid1, fdsi.ssi_signo);
 }
 
 

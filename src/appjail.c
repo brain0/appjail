@@ -49,6 +49,9 @@ int appjail_main(int argc, char *argv[]) {
   /* set up signalfd */
   sigemptyset(&mask);
   sigaddset(&mask, SIGCHLD);
+  sigaddset(&mask, SIGHUP);
+  sigaddset(&mask, SIGINT);
+  sigaddset(&mask, SIGTERM);
   if( sigprocmask(SIG_BLOCK, &mask, &oldmask) == -1 )
     errExit("sigprocmask");
   if( (sfd = signalfd(-1, &mask, SFD_CLOEXEC)) == -1 )
