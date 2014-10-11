@@ -14,7 +14,7 @@ int configure_loopback_interface() {
   int err, nlflags = NLM_F_CREATE, ret = 0;
  
   if(!want_cap(CAP_NET_ADMIN)) {
-    errWarn("cap_set_proc");
+    errWarn("Cannot set the CAP_NET_ADMIN effective capability");
     return -1;
   }
   

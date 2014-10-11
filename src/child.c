@@ -27,7 +27,7 @@ int child_main(void *arg) {
   /* Set up the private network */
   if(opts->unshare_network)
     if( configure_loopback_interface() != 0 )
-      fprintf(stderr, "Unable to configure loopback interface\n");
+      fprintf(stderr, "Unable to configure loopback interface.\n");
   /* Make our mount a slave of the host - this will make sure our
    * mounts do not propagate to the host. If we made everything
    * private now, we would lose the ability to keep anything as slave.
