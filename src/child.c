@@ -93,9 +93,8 @@ int child_main(void *arg) {
   /* make sure no file descriptors leak into the jail */
   close_file_descriptors(opts->keepfds);
 
-  if(opts->cleanenv)
-    /* set up a clean environment */
-    setup_environment(&envp, opts->keepenv);
+  /* set up the environment */
+  setup_environment(&envp, opts->cleanenv, opts->keepenv, opts->setenv);
 
   if(opts->daemonize)
     /* redirect stdin, stderr, stdout to /dev/null */

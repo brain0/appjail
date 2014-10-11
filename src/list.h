@@ -15,6 +15,7 @@ void strlist_append_copy_unique(strlist *l, const char *s);
 strlist_node *strlist_first(strlist *l);
 strlist_node *strlist_next(strlist_node *n);
 const char *strlist_val(strlist_node *n);
+void strlist_remove(strlist *l, const char *s);
 
 struct intlist;
 struct intlist_node;

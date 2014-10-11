@@ -84,6 +84,27 @@ const char *strlist_val(strlist_node *n) {
   return n->val;
 }
 
+void strlist_remove(strlist *l, const char *s) {
+  strlist_node *cur, *prev;
+
+  cur = strlist_first(l);
+  prev = NULL;
+  while(cur != NULL && strcmp(strlist_val(cur), s) != 0) {
+    prev = cur;
+    cur = strlist_next(cur);
+  }
+  if(cur != NULL) {
+    if(l->last == cur)
+      l->last = prev;
+    if(prev == NULL)
+      l->first = strlist_next(cur);
+    else
+      prev->next = strlist_next(cur);
+    free(cur->val);
+    free(cur);
+  }
+}
+
 struct intlist_node {
   int val;
   intlist_node *next;

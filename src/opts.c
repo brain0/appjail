@@ -54,6 +54,7 @@ static void usage() {
          "  --no-clean-env           Do not clean the environment.\n"
          "  --keep-env VAR           Keep the environment variable VAR.\n"
          "                           This option has no effect with --no-clean-env.\n"
+         "  --set-env VAR=VAL        Set the environment variable VAR to VAL.\n"
          "  --keep-fd FD             Do not close the file descriptor FD.\n"
          "\n");
 }
@@ -80,6 +81,7 @@ char *remove_trailing_slash(const char *p) {
 #define OPT_NO_CLEAN_ENV 265
 #define OPT_KEEP_ENV 266
 #define OPT_READ_ONLY 267
+#define OPT_SET_ENV 268
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config) {
   int opt, i;
@@ -110,6 +112,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
     { "keep-fd",            required_argument, 0,  OPT_KEEP_FD            },
     { "no-clean-env",       no_argument,       0,  OPT_NO_CLEAN_ENV       },
     { "keep-env",           required_argument, 0,  OPT_KEEP_ENV           },
+    { "set-env",            required_argument, 0,  OPT_SET_ENV            },
     { "read-only",          no_argument,       0,  OPT_READ_ONLY          },
     { 0,                    0,                 0,  0                      }
   };
@@ -146,6 +149,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   opts->mask_directories = strlist_new();
   opts->keepfds = intlist_new();
   opts->keepenv = strlist_new();
+  opts->setenv = strlist_new();
 
   /* Special environment variables */
   strlist_append_copy_unique(opts->keepenv, "PATH");
@@ -250,6 +254,9 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
       case OPT_KEEP_ENV:
         strlist_append_copy_unique(opts->keepenv, optarg);
         break;
+      case OPT_SET_ENV:
+        strlist_append_copy(opts->setenv, optarg);
+        break;
       case OPT_READ_ONLY:
         opts->readonly = true;
         break;
@@ -286,6 +293,7 @@ void free_options(appjail_options *opts) {
   strlist_free(opts->mask_directories);
   intlist_free(opts->keepfds);
   strlist_free(opts->keepenv);
+  strlist_free(opts->setenv);
   free(opts->user);
   free(opts);
 }

@@ -31,6 +31,7 @@ typedef struct {
   bool initstub;
   intlist *keepfds;
   strlist *keepenv;
+  strlist *setenv;
   bool cleanenv;
   bool readonly;
 
