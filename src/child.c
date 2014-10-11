@@ -19,9 +19,13 @@
 #include <unistd.h>
 #include <sys/mount.h>
 
+#define DATA_SIZE 100
+
 int child_main(void *arg) {
   appjail_options *opts = (appjail_options*)arg;
   char **envp = NULL;
+  char data[DATA_SIZE];
+  data[0] = '\0';
 
   init_libmount();
   /* Set up the private network */
@@ -34,7 +38,13 @@ int child_main(void *arg) {
    */
   set_mount_propagation_slave();
   /* Mount tmpfs to contain our private data to APPJAIL_SWAPDIR */
-  if( cap_mount("appjail", APPJAIL_SWAPDIR, "tmpfs", MS_NODEV | MS_NOSUID, "") == -1 )
+  if( opts->has_tmpfs_size ) {
+    if( opts->tmpfs_size <= 0 )
+      snprintf(data, DATA_SIZE - 1, "size=1");
+    else
+      snprintf(data, DATA_SIZE - 1, "size=%llu", opts->tmpfs_size);
+  }
+  if( cap_mount("appjail", APPJAIL_SWAPDIR, "tmpfs", MS_NODEV | MS_NOSUID, data) == -1 )
     errExit("mount -t tmpfs appjail " APPJAIL_SWAPDIR);
   /* Change into the temporary directory */
   if(chdir(APPJAIL_SWAPDIR) == -1)

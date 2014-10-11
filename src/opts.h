@@ -35,6 +35,9 @@ typedef struct {
   bool cleanenv;
   bool readonly;
 
+  bool has_tmpfs_size;
+  unsigned long long int tmpfs_size;
+
   /* Internal options */
   bool setup_tty;
   int pipefd;
@@ -44,3 +47,4 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
 void free_options(appjail_options *opts);
 
 bool string_to_run_mode(run_mode_t *result, const char *s);
+bool string_to_size(unsigned long long int *size, const char *s);

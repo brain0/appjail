@@ -4,6 +4,8 @@
 
 typedef struct {
   bool allow_new_privs_permitted;
+  bool has_max_tmpfs_size;
+  unsigned long long int max_tmpfs_size;
   bool default_private_network;
   run_mode_t default_run_mode;
   bool default_bind_run_media;

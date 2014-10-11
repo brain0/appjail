@@ -5,6 +5,7 @@
 #include <pwd.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 
 #define NUM_ENTRIES 10
 
@@ -56,6 +57,8 @@ static void usage() {
          "                           This option has no effect with --no-clean-env.\n"
          "  --set-env VAR=VAL        Set the environment variable VAR to VAL.\n"
          "  --keep-fd FD             Do not close the file descriptor FD.\n"
+         "  --tmpfs-size SZ          Limit the size of the tmpfs instance used for the jail's temporary\n"
+         "                           directory to SZ. The suffixes K, M or G are allowed.\n"
          "\n");
 }
 
@@ -82,9 +85,11 @@ char *remove_trailing_slash(const char *p) {
 #define OPT_KEEP_ENV 266
 #define OPT_READ_ONLY 267
 #define OPT_SET_ENV 268
+#define OPT_TMPFS_SIZE 269
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config) {
   int opt, i;
+  unsigned long long int size;
   appjail_options *opts;
   struct passwd *pw;
   static struct option long_options[] = {
@@ -114,6 +119,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
     { "keep-env",           required_argument, 0,  OPT_KEEP_ENV           },
     { "set-env",            required_argument, 0,  OPT_SET_ENV            },
     { "read-only",          no_argument,       0,  OPT_READ_ONLY          },
+    { "tmpfs-size",         required_argument, 0,  OPT_TMPFS_SIZE         },
     { 0,                    0,                 0,  0                      }
   };
 
@@ -142,6 +148,8 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   opts->initstub = false;
   opts->cleanenv = true;
   opts->readonly = false;
+  opts->has_tmpfs_size = config->has_max_tmpfs_size;
+  opts->tmpfs_size = config->max_tmpfs_size;
   /* initialize directory lists */
   opts->keep_mounts = strlist_new();
   opts->keep_mounts_full = strlist_new();
@@ -260,6 +268,14 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
       case OPT_READ_ONLY:
         opts->readonly = true;
         break;
+      case OPT_TMPFS_SIZE:
+        if(!string_to_size(&size, optarg))
+          errExitNoErrno("Invalid argument to --tmpfs-size");
+        if(!opts->has_tmpfs_size || size < opts->tmpfs_size) {
+          opts->has_tmpfs_size = true;
+          opts->tmpfs_size = size;
+        }
+        break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);
         exit(EXIT_FAILURE);
@@ -311,4 +327,31 @@ bool string_to_run_mode(run_mode_t *result, const char *s) {
     ret = false;
 
   return ret;
+}
+
+bool string_to_size(unsigned long long int *size, const char *s) {
+  unsigned long long int res;
+  char *end;
+
+  res = strtoull(s, &end, 10);
+  if( end == s || res == ULLONG_MAX || strlen(end) > 1 )
+    return false;
+
+  switch(*end) {
+    case '\0':
+      *size = res;
+      break;
+    case 'K':
+      *size = res * 1024;
+      break;
+    case 'M':
+      *size = res * 1024 * 1024;
+      break;
+    case 'G':
+      *size = res * 1024 * 1024 * 1024;
+      break;
+    default:
+      return false;
+  }
+  return true;
 }

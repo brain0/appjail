@@ -4,7 +4,6 @@ soon:
 
 maybe:
 
-* add optional size limits for the tmpfs instances (SWAPDIR, /dev/shm)
 * allow binding more file systems under /home
 * (maybe) allow binding a custom {/var,}/tmp
 * handle dbus sockets?

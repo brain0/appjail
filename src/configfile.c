@@ -9,6 +9,7 @@
 #define GRP_PERMISSIONS "Permissions"
 #define GRP_DEFAULTS "Defaults"
 #define KEY_ALLOW_NEW_PRIVS_PRERMITTED "PermitAllowNewPrivs"
+#define KEY_MAX_TMPFS_SIZE "MaxTmpfsSize"
 #define KEY_PRIVATE_NETWORK "PrivateNetwork"
 #define KEY_RUN_MODE "Run"
 #define KEY_RUN_MEDIA "RunMedia"
@@ -98,6 +99,26 @@ static bool get_run_mode(GKeyFile *cfgfile, const char *group, const char *key, 
   return ret;
 }
 
+static bool get_size(GKeyFile *cfgfile, const char *group, const char *key, bool *has_size, unsigned long long int *size) {
+  bool ret = false;
+  GError *err = NULL;
+  char *s;
+
+  s = g_key_file_get_string(cfgfile, group, key, &err);
+  if(err == NULL) {
+    ret = string_to_size(size, s);
+    if(ret)
+      *has_size = true;
+  }
+  else if(err->code == G_KEY_FILE_ERROR_KEY_NOT_FOUND || err->code == G_KEY_FILE_ERROR_GROUP_NOT_FOUND) {
+    /* value not set */
+    ret = true;
+    *has_size = false;
+  }
+  g_clear_error(&err);
+  return ret;
+}
+
 appjail_config *parse_config() {
   appjail_config *config;
   GKeyFile *cfgfile;
@@ -120,6 +141,8 @@ appjail_config *parse_config() {
   if(!get_run_mode(cfgfile, GRP_DEFAULTS, KEY_RUN_MODE, &(config->default_run_mode), RUN_PRIVATE))
     goto parse_error;
   if(!get_boolean(cfgfile, GRP_DEFAULTS, KEY_RUN_MEDIA, &(config->default_bind_run_media), false))
+    goto parse_error;
+  if(!get_size(cfgfile, GRP_PERMISSIONS, KEY_MAX_TMPFS_SIZE, &(config->has_max_tmpfs_size), &(config->max_tmpfs_size)))
     goto parse_error;
 
   g_key_file_free(cfgfile);
