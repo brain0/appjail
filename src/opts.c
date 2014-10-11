@@ -36,6 +36,7 @@ static void usage() {
          "  --keep-full <DIR>        Like --keep, but also affects all submounts of DIR.\n"
          "  -S, --shared <DIR>       Do not force private mount propagation on submounts of DIR.\n"
          "  -M, --mask <DIR>         Make DIR and all its subdirectories inaccessible in the jail.\n"
+         "  --read-only              Make the file system read-only.\n"
          "  -X, --x11                Allow X11 access.\n"
          "  --x11-trusted            Generate a trusted X11 cookie (an untrusted cookie is used by default).\n"
          "  --x11-timeout <N>        If no X11 client is connected for N seconds, the cookie is revoked.\n"
@@ -78,6 +79,7 @@ char *remove_trailing_slash(const char *p) {
 #define OPT_KEEP_FD 264
 #define OPT_NO_CLEAN_ENV 265
 #define OPT_KEEP_ENV 266
+#define OPT_READ_ONLY 267
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config) {
   int opt, i;
@@ -108,6 +110,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
     { "keep-fd",            required_argument, 0,  OPT_KEEP_FD            },
     { "no-clean-env",       no_argument,       0,  OPT_NO_CLEAN_ENV       },
     { "keep-env",           required_argument, 0,  OPT_KEEP_ENV           },
+    { "read-only",          no_argument,       0,  OPT_READ_ONLY          },
     { 0,                    0,                 0,  0                      }
   };
 
@@ -135,6 +138,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   opts->daemonize = false;
   opts->initstub = false;
   opts->cleanenv = true;
+  opts->readonly = false;
   /* initialize directory lists */
   opts->keep_mounts = strlist_new();
   opts->keep_mounts_full = strlist_new();
@@ -245,6 +249,9 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
         break;
       case OPT_KEEP_ENV:
         strlist_append_copy_unique(opts->keepenv, optarg);
+        break;
+      case OPT_READ_ONLY:
+        opts->readonly = true;
         break;
       case ':':
         fprintf(stderr, "Option -%c requires an argument.\n", optopt);

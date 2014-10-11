@@ -121,3 +121,44 @@ void unmount_directory(const char *path) {
   /* free the libmount data */
   mnt_unref_table(t);
 }
+
+static void make_mount_read_only(struct libmnt_table *t, struct libmnt_fs *r, const appjail_options *opts) {
+  const char *path = mnt_fs_get_target(r);
+  struct libmnt_iter *i;
+  struct libmnt_fs *f;
+
+  if( has_path(opts->special_mounts, path, HAS_EXACT_PATH)
+      || !strcmp(path, "/tmp")
+      || !strcmp(path, "/var/tmp") )
+    return;
+
+  if(cap_mount(NULL, path, NULL, MS_REMOUNT | MS_RDONLY | MS_BIND, NULL) == -1)
+    errExit("mount -o remount,ro");
+
+  i = mnt_new_iter(MNT_ITER_FORWARD);
+  while(mnt_table_next_child_fs(t, i, r, &f) == 0) {
+    make_mount_read_only(t, f, opts);
+    mnt_unref_fs(f);
+  }
+  mnt_free_iter(i);
+}
+
+void make_read_only(const appjail_options *opts) {
+  struct libmnt_fs *f;
+  struct libmnt_table *t;
+
+  t = mnt_new_table();
+  mnt_table_set_parser_errcb(t, error_cb);
+
+  /* parse /proc/self/mountinfo */
+  mnt_table_parse_file(t, "/proc/self/mountinfo");
+
+  f = NULL;
+  if((mnt_table_get_root_fs(t, &f)) != 0)
+    errExitNoErrno("Error while processing mountinfo");
+  make_mount_read_only(t, f, opts);
+  mnt_unref_fs(f);
+
+  /* free the libmount data */
+  mnt_unref_table(t);
+}

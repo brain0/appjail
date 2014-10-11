@@ -83,6 +83,10 @@ int child_main(void *arg) {
   /* Mask directories */
   mask_directories(opts);
 
+  /* Make the file system read-only */
+  if(opts->readonly)
+    make_read_only(opts);
+
   /* We drop all capabilities from the permitted capability set */
   drop_caps_forever();
 

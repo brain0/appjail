@@ -32,6 +32,7 @@ typedef struct {
   intlist *keepfds;
   strlist *keepenv;
   bool cleanenv;
+  bool readonly;
 
   /* Internal options */
   bool setup_tty;
