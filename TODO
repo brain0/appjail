@@ -1,11 +1,3 @@
-soon:
-
 * make defaults for --keep and --keep-full configurable
-
-maybe:
-
-* allow binding more file systems under /home
-* (maybe) allow binding a custom {/var,}/tmp
-* handle dbus sockets?
 * add optional seccomp restrictions?
 * bind/copy some configuration files from the host?
