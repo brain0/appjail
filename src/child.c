@@ -108,7 +108,7 @@ int child_main(void *arg) {
 
   if(opts->daemonize)
     /* redirect stdin, stderr, stdout to /dev/null */
-    redirect_to_dev_null();
+    redirect_to_dev_null(opts->keep_output);
 
   /* signal the main process */
   signal_mainpid(opts->pipefd);

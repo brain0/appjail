@@ -28,6 +28,7 @@ typedef struct {
   bool unshare_network;
 
   bool daemonize;
+  bool keep_output;
   bool initstub;
   intlist *keepfds;
   strlist *keepenv;

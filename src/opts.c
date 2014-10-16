@@ -26,6 +26,7 @@ static void usage() {
          "  -h, --help               Print command help and exit.\n"
          "  -v, --version            Print version information and exit.\n"
          "  -d, --daemonize          Run the jailed process in the background.\n"
+         "  --keep-output            Do not close stdout/stderr in --daemonize mode.\n"
          "  -i, --initstub           Run a stub init process inside the jail.\n"
          "  -p, --allow-new-privs    Don't prevent setuid binaries from raising privileges.\n"
          "  --keep-shm               Keep the host's /dev/shm directory.\n"
@@ -86,6 +87,7 @@ char *remove_trailing_slash(const char *p) {
 #define OPT_READ_ONLY 267
 #define OPT_SET_ENV 268
 #define OPT_TMPFS_SIZE 269
+#define OPT_KEEP_OUTPUT 270
 
 appjail_options *parse_options(int argc, char *argv[], const appjail_config *config) {
   int opt, i;
@@ -113,6 +115,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
     { "system-bus",         no_argument,       0,  OPT_KEEP_SYSTEM_BUS    },
     { "mask",               required_argument, 0,  'M'                    },
     { "daemonize",          no_argument,       0,  'd'                    },
+    { "keep-output",        no_argument,       0,  OPT_KEEP_OUTPUT        },
     { "initstub",           no_argument,       0,  'i'                    },
     { "keep-fd",            required_argument, 0,  OPT_KEEP_FD            },
     { "no-clean-env",       no_argument,       0,  OPT_NO_CLEAN_ENV       },
@@ -145,6 +148,7 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
   opts->bind_run_media = config->default_bind_run_media;
   opts->keep_system_bus = false;
   opts->daemonize = false;
+  opts->keep_output = false;
   opts->initstub = false;
   opts->cleanenv = true;
   opts->readonly = false;
@@ -247,6 +251,9 @@ appjail_options *parse_options(int argc, char *argv[], const appjail_config *con
         break;
       case 'd':
         opts->daemonize = true;
+        break;
+      case OPT_KEEP_OUTPUT:
+        opts->keep_output = true;
         break;
       case 'i':
         opts->initstub = true;
