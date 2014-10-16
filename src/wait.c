@@ -46,8 +46,10 @@ static void handle_pipe(int *pipefd, bool daemonize, bool *child_initialized) {
   if(s == 0) {
     /* end of file, this is an error if the child has
      * not signaled that it finished initializing */
-    if( *child_initialized )
+    if( *child_initialized ) {
+      close(*pipefd);
       *pipefd = -1;
+    }
     else {
       fprintf(stderr, APPLICATION_NAME ": Child failed to initialize.\n");
       exit(EXIT_FAILURE);
