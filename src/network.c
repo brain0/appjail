@@ -1,5 +1,6 @@
 #include "network.h"
 #include "cap.h"
+#include <net/if.h>
 #include <netlink/route/addr.h>
 #include <netlink/addr.h>
 #include <netlink/cache.h>
