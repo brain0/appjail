@@ -89,6 +89,7 @@ void sanitize_mounts(appjail_options *opts) {
     errExit("mount -t proc proc /proc");
 
   /* re-read /proc/self/mountinfo */
+  mnt_reset_table(t);
   mnt_table_parse_file(t, "/proc/self/mountinfo");
 
   f = NULL;
